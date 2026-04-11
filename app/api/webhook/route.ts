@@ -38,7 +38,10 @@ export async function POST(req: NextRequest) {
 
     if (!ACCESS_TOKEN || !PHONE_NUMBER_ID) {
       console.error('Missing WhatsApp environment variables')
-      return NextResponse.json({ status: 'missing_env_vars' }, { status: 500 })
+      return NextResponse.json(
+        { status: 'missing_env_vars' },
+        { status: 500 }
+      )
     }
 
     let replyText = `Welcome to PMI Sticker System 🚗
