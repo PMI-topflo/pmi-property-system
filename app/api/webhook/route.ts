@@ -1318,7 +1318,7 @@ async function sendReply(phone: string, text: string, channel: Channel) {
   const to = channel === 'whatsapp' ? `whatsapp:${phone}` : phone
 
   if (channel === 'sms' && text.length > 1500) {
-    for (const chunk of text.match(/.{1,1500}/gs) ?? [text])
+    for (const chunk of text.match(/.{1,1500}/g) ?? [text])
       await twilioClient.messages.create({ from, to, body: chunk })
     return
   }
