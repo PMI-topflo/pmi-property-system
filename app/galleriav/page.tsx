@@ -152,14 +152,7 @@ body{font-family:'Open Sans',sans-serif;background:#fff;color:#222}
           <div className="prow-btn">Apply Now</div>
         </a>
 
-        <div className="sh">
-          <div className="sh-orb">📁</div>
-          <div><div className="sh-t">Association Documents</div><div className="sh-s">Live document folders</div></div>
-          <div className="sh-line" />
-        </div>
-
-        <div className="dgrid">
-              <a href="https://drive.google.com/drive/folders/132VY3u0BsOplKJcudFAkCUYK4UEDs_ok" target="_blank" rel="noreferrer" className="dcard"><div className="dcard-icon">📜</div><div className="dcard-name">Rules & Regulations</div><div className="dcard-tag">Open Folder</div></a>
+        <div className="dcard-name">Rules & Regulations</div><div className="dcard-tag">Open Folder</div></a>
               <a href="https://drive.google.com/drive/folders/1f4vvoamEA2s0r4MP_wFcDGU9pzjgwXNE" target="_blank" rel="noreferrer" className="dcard"><div className="dcard-icon">📝</div><div className="dcard-name">Tenant Applications</div><div className="dcard-tag">Open Folder</div></a>
               <a href="https://drive.google.com/drive/folders/120rT2dHRMPAv0g2wQE4dN_EHJvA8biRE" target="_blank" rel="noreferrer" className="dcard"><div className="dcard-icon">💰</div><div className="dcard-name">Financials</div><div className="dcard-tag">Open Folder</div></a>
               <a href="https://drive.google.com/drive/folders/1UEAEJLGsT5DPgfiYegogS9x8Jw5VySXN" target="_blank" rel="noreferrer" className="dcard"><div className="dcard-icon">🔧</div><div className="dcard-name">Maintenance</div><div className="dcard-tag">Open Folder</div></a>
@@ -178,17 +171,22 @@ body{font-family:'Open Sans',sans-serif;background:#fff;color:#222}
           <div className="sh-line" />
         </div>
 
-        <a href="https://drive.google.com/drive/folders/1RGGBxke8umRS6kH9PTX4P-SJmvuHCsJh" target="_blank" rel="noreferrer" className="prow">
+        <a href="https://drive.google.com/uc?export=download&id=1PDg2fFZurrHZ_BL7O4IKtOdyziMunYMt" download className="prow">
           <div className="prow-orb">📄</div>
           <div className="prow-info"><div className="prow-t">Owner ACH Autopay Form — FREE</div><div className="prow-d">Automatic payments processed on the 10th. Email to ar@topfloridaproperties.com</div></div>
           <div className="prow-btn">Download</div>
         </a>
-        <a href="https://drive.google.com/drive/folders/1RGGBxke8umRS6kH9PTX4P-SJmvuHCsJh" target="_blank" rel="noreferrer" className="prow">
+        <a href="https://drive.google.com/uc?export=download&id=16sg8Cf6RkC4DiFZIIEE7YKXqtf_HkJAI" download className="prow">
           <div className="prow-orb">🏗️</div>
           <div className="prow-info"><div className="prow-t">ARC Architectural Request Form</div><div className="prow-d">Required before any exterior modification. No work without ACC approval.</div></div>
           <div className="prow-btn">Download</div>
         </a>
-        <a href="https://drive.google.com/drive/folders/1RGGBxke8umRS6kH9PTX4P-SJmvuHCsJh" target="_blank" rel="noreferrer" className="prow">
+        <a href="https://drive.google.com/uc?export=download&id=1EdQBWOykqDLKAN6yFjl7rSbqHGr7VvSW" download className="prow">
+          <div className="prow-orb">💌</div>
+          <div className="prow-info"><div className="prow-t">Galleria Village — Welcome Letter</div><div className="prow-d">New owner welcome packet with payment instructions and portal access info</div></div>
+          <div className="prow-btn">Download</div>
+        </a>
+        <a href="https://drive.google.com/uc?export=download&id=1WZGqa6OBK5MifWa8cNsOm2CP-jQngiob" download className="prow">
           <div className="prow-orb">🏢</div>
           <div className="prow-info"><div className="prow-t">Vendor ACH Authorization Form</div><div className="prow-d">Required before first vendor payment. Send to billing@topfloridaproperties.com</div></div>
           <div className="prow-btn">Download</div>

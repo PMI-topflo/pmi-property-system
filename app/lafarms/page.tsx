@@ -152,14 +152,7 @@ body{font-family:'Open Sans',sans-serif;background:#fff;color:#222}
           <div className="prow-btn">Apply Now</div>
         </a>
 
-        <div className="sh">
-          <div className="sh-orb">📁</div>
-          <div><div className="sh-t">Association Documents</div><div className="sh-s">Links coming soon — your team is adding them</div></div>
-          <div className="sh-line" />
-        </div>
-
-        <div className="dgrid">
-              <div className="dcard locked"><div className="dcard-icon">📜</div><div className="dcard-name">Rules & Regulations</div><span className="dcard-cs">Coming Soon</span></div>
+        <div className="dcard-name">Rules & Regulations</div><span className="dcard-cs">Coming Soon</span></div>
               <div className="dcard locked"><div className="dcard-icon">📝</div><div className="dcard-name">Tenant Applications</div><span className="dcard-cs">Coming Soon</span></div>
               <div className="dcard locked"><div className="dcard-icon">💰</div><div className="dcard-name">Financials</div><span className="dcard-cs">Coming Soon</span></div>
               <div className="dcard locked"><div className="dcard-icon">🔧</div><div className="dcard-name">Maintenance</div><span className="dcard-cs">Coming Soon</span></div>
@@ -178,17 +171,17 @@ body{font-family:'Open Sans',sans-serif;background:#fff;color:#222}
           <div className="sh-line" />
         </div>
 
-        <a href="https://drive.google.com/drive/folders/1RGGBxke8umRS6kH9PTX4P-SJmvuHCsJh" target="_blank" rel="noreferrer" className="prow">
+        <a href="https://drive.google.com/uc?export=download&id=1PDg2fFZurrHZ_BL7O4IKtOdyziMunYMt" download className="prow">
           <div className="prow-orb">📄</div>
           <div className="prow-info"><div className="prow-t">Owner ACH Autopay Form — FREE</div><div className="prow-d">Automatic payments processed on the 10th. Email to ar@topfloridaproperties.com</div></div>
           <div className="prow-btn">Download</div>
         </a>
-        <a href="https://drive.google.com/drive/folders/1RGGBxke8umRS6kH9PTX4P-SJmvuHCsJh" target="_blank" rel="noreferrer" className="prow">
+        <a href="https://drive.google.com/uc?export=download&id=16sg8Cf6RkC4DiFZIIEE7YKXqtf_HkJAI" download className="prow">
           <div className="prow-orb">🏗️</div>
           <div className="prow-info"><div className="prow-t">ARC Architectural Request Form</div><div className="prow-d">Required before any exterior modification. No work without ACC approval.</div></div>
           <div className="prow-btn">Download</div>
         </a>
-        <a href="https://drive.google.com/drive/folders/1RGGBxke8umRS6kH9PTX4P-SJmvuHCsJh" target="_blank" rel="noreferrer" className="prow">
+        <a href="https://drive.google.com/uc?export=download&id=1WZGqa6OBK5MifWa8cNsOm2CP-jQngiob" download className="prow">
           <div className="prow-orb">🏢</div>
           <div className="prow-info"><div className="prow-t">Vendor ACH Authorization Form</div><div className="prow-d">Required before first vendor payment. Send to billing@topfloridaproperties.com</div></div>
           <div className="prow-btn">Download</div>
