@@ -194,7 +194,7 @@ body{font-family:'Open Sans',sans-serif;background:#fff;color:#222}
           <div className="ccard"><div className="cdept">Care Team</div><div className="cdetail">Maintenance, work orders, vendors</div><a href="mailto:service@topfloridaproperties.com" className="cemail">service@topfloridaproperties.com</a><div className="cphone">(305) 900-5077</div></div>
           <div className="ccard"><div className="cdept">Support &amp; Compliance</div><div className="cdetail">Violations, compliance, Ron</div><a href="mailto:support@topfloridaproperties.com" className="cemail">support@topfloridaproperties.com</a></div>
           <div className="ccard"><div className="cdept">Billing</div><div className="cdetail">Vendor invoices, payments</div><a href="mailto:billing@topfloridaproperties.com" className="cemail">billing@topfloridaproperties.com</a></div>
-          <div className="ccard"><div className="cdept">General Inquiries</div><div className="cdetail">ARC forms, applications</div><a href="mailto:info@topfloridaproperties.com" className="cemail">info@topfloridaproperties.com</a><div className="cphone">(786) 614-0643</div></div>
+          <div className="ccard"><div className="cdept">General Inquiries</div><div className="cdetail">ARC forms, applications</div><a href="mailto:support@topfloridaproperties.com" className="cemail">support@topfloridaproperties.com</a></div>
           <div className="ccard"><div className="cdept">Mailing Address</div><div className="cdetail">Check: payable to full HOA name, account # in MEMO</div><div className="cphone">PMI Top Florida Properties<br/>P.O. Box 163556, Miami FL 33116</div></div>
         </div>
 
@@ -226,7 +226,7 @@ body{font-family:'Open Sans',sans-serif;background:#fff;color:#222}
             <div className="ftr-col-t">Contact</div>
             <a href="mailto:ar@topfloridaproperties.com">ar@topfloridaproperties.com</a>
             <a href="mailto:service@topfloridaproperties.com">service@topfloridaproperties.com</a>
-            <a href="mailto:info@topfloridaproperties.com">info@topfloridaproperties.com</a>
+            <a href="mailto:support@topfloridaproperties.com">support@topfloridaproperties.com</a>
             <a href="https://www.topfloridaproperties.com" target="_blank" rel="noreferrer">topfloridaproperties.com</a>
           </div>
         </div>
@@ -235,6 +235,33 @@ body{font-family:'Open Sans',sans-serif;background:#fff;color:#222}
           <span>Each franchisee is independently owned and operated.</span>
         </div>
       </footer>
+
+      {/* Vendor Info Modal */}
+      <div id="vendor-modal" style={{display:'none',position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:9999,alignItems:'center',justifyContent:'center'}}>
+        <div style={{background:'white',borderRadius:12,padding:'32px 28px',maxWidth:520,width:'90%',position:'relative',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
+          <button onClick={()=>document.getElementById('vendor-modal')!.style.display='none'} style={{position:'absolute',top:16,right:18,background:'none',border:'none',fontSize:22,cursor:'pointer',color:'#888',lineHeight:1}}>×</button>
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
+            <div style={{width:44,height:44,background:'#e85d26',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>🏢</div>
+            <div>
+              <div style={{fontFamily:'Montserrat,sans-serif',fontSize:15,fontWeight:800,color:'#111'}}>Vendor Registration Requirements</div>
+              <div style={{fontSize:12,color:'#999',marginTop:2}}>PMI Top Florida Properties</div>
+            </div>
+          </div>
+          <div style={{fontSize:13,color:'#444',lineHeight:1.75}}>
+            <p style={{marginBottom:12}}>All vendors must register with PMI before receiving payment. Please submit the following:</p>
+            <div style={{background:'#f7f7f7',borderRadius:8,padding:'14px 16px',marginBottom:16}}>
+              <div style={{display:'flex',gap:10,marginBottom:8}}><span style={{color:'#e85d26',fontWeight:700}}>1.</span><span><strong>W9 Form</strong> — completed and signed</span></div>
+              <div style={{display:'flex',gap:10,marginBottom:8}}><span style={{color:'#e85d26',fontWeight:700}}>2.</span><span><strong>ACH Authorization Form</strong> — all payments are made by ACH only. Send completed form to <a href="mailto:billing@topfloridaproperties.com" style={{color:'#e85d26'}}>billing@topfloridaproperties.com</a></span></div>
+              <div style={{display:'flex',gap:10}}><span style={{color:'#e85d26',fontWeight:700}}>3.</span><span><strong>Certificate of Insurance (COI)</strong> listing two additional insured parties:<br/><br/><em>① The individual association name and address (shown on this page)</em><br/><br/>② <strong>PMI Top Florida Properties</strong><br/>1031 Ives Dairy Road, Suite 228<br/>Miami, FL 33179</span></div>
+            </div>
+            <p style={{fontSize:12,color:'#888'}}>Once all documents are received your vendor profile will be activated and payments processed via ACH within 5-7 business days.</p>
+          </div>
+          <div style={{display:'flex',gap:10,marginTop:20}}>
+            <a href="https://drive.google.com/uc?export=download&id=1WZGqa6OBK5MifWa8cNsOm2CP-jQngiob" style={{flex:1,background:'#e85d26',color:'white',fontFamily:'Montserrat,sans-serif',fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',padding:'10px 16px',borderRadius:6,textDecoration:'none',textAlign:'center'}}>Download ACH Form</a>
+            <button onClick={()=>document.getElementById('vendor-modal')!.style.display='none'} style={{flex:1,background:'#f0f0f0',color:'#555',fontFamily:'Montserrat,sans-serif',fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',padding:'10px 16px',borderRadius:6,border:'none',cursor:'pointer'}}>Close</button>
+          </div>
+        </div>
+      </div>
     </>
   )
 }
