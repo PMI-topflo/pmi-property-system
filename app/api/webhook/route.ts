@@ -654,10 +654,7 @@ async function buildRentvineContext(ctx: CallerContext): Promise<string> {
       ? `Open Work Orders: ${data.openWorkOrders}` : '',
   ].filter(Boolean)
 
-  return lines.length ? '
-Rentvine Data:
-' + lines.join('
-') : ''
+  return lines.length ? `\nRentvine Data:\n${lines.join('\n')}` : ''
 }
 
 // ============================================================
