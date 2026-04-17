@@ -1,3 +1,4 @@
+'use client'
 // app/parcview/page.tsx
 // Parcview Villas
 // URL: https://www.mypmitop.com/parcview
@@ -247,9 +248,9 @@ body{font-family:'Open Sans',sans-serif;background:#fff;color:#222}
       </footer>
 
       {/* Vendor Info Modal */}
-      <div id="vendor-modal" style={{display:'none',position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:9999,alignItems:'center',justifyContent:'center'}}>
+      <div id="vendor-modal" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:9999,alignItems:'center',justifyContent:'center',display:'none'}} className="vendor-modal-wrap">
         <div style={{background:'white',borderRadius:12,padding:'32px 28px',maxWidth:520,width:'90%',position:'relative',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
-          <button onClick={()=>document.getElementById('vendor-modal')!.style.display='none'} style={{position:'absolute',top:16,right:18,background:'none',border:'none',fontSize:22,cursor:'pointer',color:'#888',lineHeight:1}}>×</button>
+          <a href="#" style={{position:'absolute',top:16,right:18,background:'none',border:'none',fontSize:22,cursor:'pointer',color:'#888',lineHeight:1,textDecoration:'none'}}>×</a>
           <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
             <div style={{width:44,height:44,background:'#e85d26',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>🏢</div>
             <div>
@@ -268,7 +269,7 @@ body{font-family:'Open Sans',sans-serif;background:#fff;color:#222}
           </div>
           <div style={{display:'flex',gap:10,marginTop:20}}>
             <a href="https://drive.google.com/uc?export=download&id=1WZGqa6OBK5MifWa8cNsOm2CP-jQngiob" style={{flex:1,background:'#e85d26',color:'white',fontFamily:'Montserrat,sans-serif',fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',padding:'10px 16px',borderRadius:6,textDecoration:'none',textAlign:'center'}}>Download ACH Form</a>
-            <button onClick={()=>document.getElementById('vendor-modal')!.style.display='none'} style={{flex:1,background:'#f0f0f0',color:'#555',fontFamily:'Montserrat,sans-serif',fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',padding:'10px 16px',borderRadius:6,border:'none',cursor:'pointer'}}>Close</button>
+            <a href="#" style={{flex:1,background:'#f0f0f0',color:'#555',fontFamily:'Montserrat,sans-serif',fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',padding:'10px 16px',borderRadius:6,border:'none',cursor:'pointer',textDecoration:'none',textAlign:'center'}}>Close</a>
           </div>
         </div>
       </div>

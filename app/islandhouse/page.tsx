@@ -1,3 +1,4 @@
+'use client'
 // app/islandhouse/page.tsx
 // Island House North Condominium Association, Inc.
 // URL: https://www.mypmitop.com/islandhouse
@@ -142,7 +143,7 @@ body{font-family:'Open Sans',sans-serif;background:#fff;color:#222}
         <div className="sh"><div className="sh-orb">📄</div><div><div className="sh-t">Forms &amp; Downloads</div><div className="sh-s">Official PMI forms — valid for all associations</div></div><div className="sh-line" /></div>
         <a href="https://drive.google.com/uc?export=download&id=1PDg2fFZurrHZ_BL7O4IKtOdyziMunYMt" download className="prow"><div className="prow-orb">📄</div><div className="prow-info"><div className="prow-t">Owner ACH Autopay Form — FREE</div><div className="prow-d">Automatic payments on the 10th. Email completed form to ar@topfloridaproperties.com</div></div><div className="prow-btn">⬇ Download</div></a>
         <a href="https://drive.google.com/uc?export=download&id=16sg8Cf6RkC4DiFZIIEE7YKXqtf_HkJAI" download className="prow"><div className="prow-orb">🏗️</div><div className="prow-info"><div className="prow-t">ARC Architectural Request Form</div><div className="prow-d">Required before any exterior modification. No work without ACC approval.</div></div><div className="prow-btn">⬇ Download</div></a>
-        <div className="prow" style={{cursor:'pointer'}} onClick={()=>{const m=document.getElementById('vendor-modal');if(m)m.style.display='flex'}}><div className="prow-orb">🏢</div><div className="prow-info"><div className="prow-t">Vendor Registration &amp; ACH Form</div><div className="prow-d">W9 · ACH form · Certificate of Insurance — click to view all requirements</div></div><div className="prow-btn">View Info</div></div>
+        <a href="#vendor-modal" className="prow" style={{textDecoration:'none'}}><div className="prow-orb">🏢</div><div className="prow-info"><div className="prow-t">Vendor Registration &amp; ACH Form</div><div className="prow-d">W9 · ACH form · Certificate of Insurance — click to view all requirements</div></div><div className="prow-btn">View Info</div></div>
         <div className="sh"><div className="sh-orb">📞</div><div><div className="sh-t">Contact Us</div><div className="sh-s">Email is preferred for all documentation</div></div><div className="sh-line" /></div>
         <div className="cgrid">
           <div className="ccard"><div className="cdept">Accounts Receivable</div><div className="cdetail">HOA fees, assessments, ACH setup</div><a href="mailto:ar@topfloridaproperties.com" className="cemail">ar@topfloridaproperties.com</a><div className="cphone">(305) 900-5105</div></div>
