@@ -94,7 +94,7 @@ async function sendEmail({ to, subject, text }: { to: string; subject: string; t
     await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: "PMI Top Florida Properties <noreply@mypmitop.com>", to: [to], subject, text }),
+      body: JSON.stringify({ from: "PMI Top Florida Properties <maia@pmitop.com>", to: [to], subject, text }),
     });
   } catch (err) { console.error("[email] Failed:", err); }
 }

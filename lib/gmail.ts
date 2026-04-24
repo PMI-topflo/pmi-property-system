@@ -2,7 +2,7 @@
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const SEND_URL  = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'
-const FROM      = 'MAIA <maia@mypmitop.com>'
+const FROM      = 'MAIA <maia@pmitop.com>'
 
 // Module-level cache — survives across requests within the same serverless instance
 let tokenCache: { value: string; expiresAt: number } | null = null
