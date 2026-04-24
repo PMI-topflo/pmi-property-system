@@ -36,15 +36,6 @@ export default function PageVenetianrec() {
             <div className="prow-btn">Download</div>
           </a>
 
-          <a href="https://secure.condocerts.com/resale/" target="_blank" rel="noreferrer" className="prow">
-            <div className="prow-orb">🖨️</div>
-            <div className="prow-info">
-              <div className="prow-t">Estoppel Request &ndash; Condocerts</div>
-              <div className="prow-d">Required for property sale or refinancing &middot; 5&ndash;7 business days</div>
-            </div>
-            <div className="prow-btn">Submit</div>
-          </a>
-
         </div>
       </section>
 
