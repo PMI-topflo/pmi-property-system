@@ -258,8 +258,8 @@ const COPY: Record<Lang, T> = {
 }
 
 // ── Shared input/label styles ─────────────────────────────────────────────────
-const inputCls = 'w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white'
-const labelCls = 'block text-xs font-semibold text-gray-600 mb-1'
+const inputCls = 'w-full px-3 py-2.5 border border-[#e5e7eb] rounded-[2px] text-sm focus:outline-none focus:border-[#f26a1b] focus:shadow-[0_0_0_3px_rgba(242,106,27,.12)] bg-white transition-shadow'
+const labelCls = 'block mb-1 text-[0.62rem] font-medium uppercase tracking-[0.1em] text-[#6b7280] [font-family:var(--font-mono)]'
 
 export default function Home() {
   const router = useRouter()
@@ -309,7 +309,7 @@ export default function Home() {
     if (key === 'board')     { window.open('https://pmitfp.cincwebaxis.com/', '_blank'); return }
     if (key === 'vendor')    { setView('vendor-form'); return }
     if (key === 'title')     { window.open('https://secure.condocerts.com/resale/', '_blank'); return }
-    if (key === 'staff')     { router.push('/admin'); return }
+    if (key === 'staff')     { setView('homeowner-form'); return }
   }
 
   async function handleHomeownerLookup(e: React.FormEvent) {
@@ -371,7 +371,7 @@ export default function Home() {
   const BackBtn = () => (
     <button
       onClick={() => setView('home')}
-      className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-orange-600 font-medium mb-6 transition-colors"
+      className="inline-flex items-center gap-1 text-[0.72rem] text-[#6b7280] hover:text-[#f26a1b] [font-family:var(--font-mono)] uppercase tracking-[0.08em] mb-6 transition-colors"
     >
       {t.back}
     </button>
@@ -395,7 +395,7 @@ export default function Home() {
     <button
       type="submit"
       disabled={disabled}
-      className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-colors"
+      className="w-full bg-[#f26a1b] hover:bg-[#f58140] disabled:opacity-50 text-white [font-family:var(--font-mono)] text-[0.62rem] font-medium uppercase tracking-[0.08em] py-2.5 px-4 rounded-[2px] transition-colors"
     >
       {label}
     </button>
@@ -404,7 +404,7 @@ export default function Home() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen flex flex-col bg-[#f5f5f4]" dir={isRtl ? 'rtl' : 'ltr'}>
 
       {/* ── Header ─────────────────────────────────────────── */}
       <header className="bg-black text-white">
@@ -478,9 +478,9 @@ export default function Home() {
         {view === 'homeowner-form' && (
           <div className="max-w-md mx-auto">
             <BackBtn />
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-              <h2 className={`text-lg font-bold text-gray-900 mb-1 ${isRtl ? 'text-right' : ''}`}>{t.lookupTitle}</h2>
-              <p className={`text-sm text-gray-500 mb-5 ${isRtl ? 'text-right' : ''}`}>{t.lookupSubtitle}</p>
+            <div className="bg-white border border-[#e5e7eb] rounded-[3px] shadow-[0_1px_4px_rgba(13,13,13,.06)] p-6">
+              <h2 className={`text-lg font-light text-[#0d0d0d] mb-1 [font-family:var(--font-display)] ${isRtl ? 'text-right' : ''}`}>{t.lookupTitle}</h2>
+              <p className={`text-sm text-[#6b7280] mb-5 ${isRtl ? 'text-right' : ''}`}>{t.lookupSubtitle}</p>
               <form onSubmit={handleHomeownerLookup} className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -510,15 +510,15 @@ export default function Home() {
         {view === 'homeowner-notfound' && (
           <div className="max-w-md mx-auto">
             <BackBtn />
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
+            <div className="bg-white border border-[#e5e7eb] rounded-[3px] shadow-[0_1px_4px_rgba(13,13,13,.06)] p-6 text-center">
               <div className="text-4xl mb-3">🔍</div>
-              <h2 className="text-lg font-bold text-gray-900 mb-2">{t.notFoundTitle}</h2>
-              <p className="text-sm text-gray-500 mb-4">{t.notFoundBody}</p>
+              <h2 className="text-lg font-light text-[#0d0d0d] mb-2 [font-family:var(--font-display)]">{t.notFoundTitle}</h2>
+              <p className="text-sm text-[#6b7280] mb-4">{t.notFoundBody}</p>
               <div className="space-y-2">
-                <a href="mailto:PMI@topfloridaproperties.com" className="block text-orange-500 hover:underline font-medium text-sm">
+                <a href="mailto:PMI@topfloridaproperties.com" className="block text-[#f26a1b] hover:underline [font-family:var(--font-mono)] text-[0.72rem] uppercase tracking-[0.06em]">
                   PMI@topfloridaproperties.com
                 </a>
-                <a href="tel:+13059005077" className="block text-orange-500 hover:underline font-medium text-sm">
+                <a href="tel:+13059005077" className="block text-[#f26a1b] hover:underline [font-family:var(--font-mono)] text-[0.72rem] uppercase tracking-[0.06em]">
                   305.900.5077
                 </a>
               </div>
@@ -530,9 +530,9 @@ export default function Home() {
         {view === 'agent-form' && (
           <div className="max-w-md mx-auto">
             <BackBtn />
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-              <h2 className={`text-lg font-bold text-gray-900 mb-1 ${isRtl ? 'text-right' : ''}`}>{t.agentTitle}</h2>
-              <p className={`text-sm text-gray-500 mb-5 ${isRtl ? 'text-right' : ''}`}>{t.agentSubtitle}</p>
+            <div className="bg-white border border-[#e5e7eb] rounded-[3px] shadow-[0_1px_4px_rgba(13,13,13,.06)] p-6">
+              <h2 className={`text-lg font-light text-[#0d0d0d] mb-1 [font-family:var(--font-display)] ${isRtl ? 'text-right' : ''}`}>{t.agentTitle}</h2>
+              <p className={`text-sm text-[#6b7280] mb-5 ${isRtl ? 'text-right' : ''}`}>{t.agentSubtitle}</p>
               <form onSubmit={handleAgentSubmit} className="space-y-3">
                 <div>
                   <label className={labelCls}>{t.agentName} *</label>
@@ -561,10 +561,10 @@ export default function Home() {
         {view === 'agent-sent' && (
           <div className="max-w-md mx-auto">
             <BackBtn />
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
+            <div className="bg-white border border-[#e5e7eb] rounded-[3px] shadow-[0_1px_4px_rgba(13,13,13,.06)] p-6 text-center">
               <div className="text-4xl mb-3">✅</div>
-              <h2 className="text-lg font-bold text-gray-900 mb-2">{t.agentSentTitle}</h2>
-              <p className="text-sm text-gray-500">{t.agentSentBody}</p>
+              <h2 className="text-lg font-light text-[#0d0d0d] mb-2 [font-family:var(--font-display)]">{t.agentSentTitle}</h2>
+              <p className="text-sm text-[#6b7280]">{t.agentSentBody}</p>
             </div>
           </div>
         )}
@@ -573,9 +573,9 @@ export default function Home() {
         {view === 'vendor-form' && (
           <div className="max-w-md mx-auto">
             <BackBtn />
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-              <h2 className={`text-lg font-bold text-gray-900 mb-1 ${isRtl ? 'text-right' : ''}`}>{t.vendorTitle}</h2>
-              <p className={`text-sm text-gray-500 mb-5 ${isRtl ? 'text-right' : ''}`}>{t.vendorSubtitle}</p>
+            <div className="bg-white border border-[#e5e7eb] rounded-[3px] shadow-[0_1px_4px_rgba(13,13,13,.06)] p-6">
+              <h2 className={`text-lg font-light text-[#0d0d0d] mb-1 [font-family:var(--font-display)] ${isRtl ? 'text-right' : ''}`}>{t.vendorTitle}</h2>
+              <p className={`text-sm text-[#6b7280] mb-5 ${isRtl ? 'text-right' : ''}`}>{t.vendorSubtitle}</p>
               <form onSubmit={handleVendorSubmit} className="space-y-3">
                 <div>
                   <label className={labelCls}>{t.company} *</label>
@@ -604,10 +604,10 @@ export default function Home() {
         {view === 'vendor-sent' && (
           <div className="max-w-md mx-auto">
             <BackBtn />
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
+            <div className="bg-white border border-[#e5e7eb] rounded-[3px] shadow-[0_1px_4px_rgba(13,13,13,.06)] p-6 text-center">
               <div className="text-4xl mb-3">✅</div>
-              <h2 className="text-lg font-bold text-gray-900 mb-2">{t.vendorSentTitle}</h2>
-              <p className="text-sm text-gray-500">{t.vendorSentBody}</p>
+              <h2 className="text-lg font-light text-[#0d0d0d] mb-2 [font-family:var(--font-display)]">{t.vendorSentTitle}</h2>
+              <p className="text-sm text-[#6b7280]">{t.vendorSentBody}</p>
             </div>
           </div>
         )}
