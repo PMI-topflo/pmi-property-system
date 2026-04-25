@@ -13,22 +13,27 @@ export async function POST(req: NextRequest) {
 
   // ── Staff check (silent — never exposed in response) ──────────────────────
   {
-    let staffQuery = supabaseAdmin
-      .from('pmi_staff')
-      .select('id')
-      .eq('active', true)
+    const emailConds = email
+      ? `email.ilike.%${email}%,personal_email.ilike.%${email}%`
+      : null
+    const phoneConds = digits.length >= 7
+      ? `phone.ilike.%${digits}%,personal_phone.ilike.%${digits}%`
+      : null
 
-    if (email && digits.length >= 7) {
-      staffQuery = staffQuery.or(`email.ilike.%${email}%,phone.ilike.%${digits}%`)
-    } else if (email) {
-      staffQuery = staffQuery.ilike('email', `%${email}%`)
-    } else {
-      staffQuery = staffQuery.ilike('phone', `%${digits}%`)
-    }
+    const orClause = [emailConds, phoneConds].filter(Boolean).join(',')
 
-    const { data: staff } = await staffQuery.limit(1).single()
-    if (staff?.id) {
-      return NextResponse.json({ found: true, staff: true })
+    if (orClause) {
+      const { data: staff } = await supabaseAdmin
+        .from('pmi_staff')
+        .select('id')
+        .eq('active', true)
+        .or(orClause)
+        .limit(1)
+        .single()
+
+      if (staff?.id) {
+        return NextResponse.json({ found: true, staff: true })
+      }
     }
   }
 
