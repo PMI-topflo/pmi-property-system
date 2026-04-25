@@ -3,8 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export type MatchedRole =
   | { type: 'staff' }
-  | { type: 'owner';  owner_id: number; association_code: string; association_name: string }
-  | { type: 'board';  association_code: string; association_name: string; position: string | null }
+  | { type: 'owner';  owner_id: number;       association_code: string; association_name: string }
+  | { type: 'board';  board_member_id: string; association_code: string; association_name: string; position: string | null }
 
 export async function POST(req: NextRequest) {
   const { firstName, lastName, email, phone } = await req.json()
@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
     for (const row of boardMatches) {
       roles.push({
         type: 'board',
+        board_member_id: row.id,
         association_code: row.association_code,
         association_name: nameMap[row.association_code] ?? row.association_code,
         position: row.position ?? null,

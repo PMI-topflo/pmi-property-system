@@ -18,7 +18,7 @@ type View =
 type MatchedRole =
   | { type: 'staff' }
   | { type: 'owner';  owner_id: number; association_code: string; association_name: string }
-  | { type: 'board';  association_code: string; association_name: string; position: string | null }
+  | { type: 'board';  board_member_id: string; association_code: string; association_name: string; position: string | null }
 
 const LANG_TABS: { code: Lang; label: string }[] = [
   { code: 'en', label: 'EN' },
@@ -322,7 +322,7 @@ export default function Home() {
     if (key === 'applicant') { router.push('/apply'); return }
     if (key === 'buyer')     { router.push('/apply'); return }
     if (key === 'agent')     { setView('agent-form'); return }
-    if (key === 'board')     { window.open('https://pmitfp.cincwebaxis.com/', '_blank'); return }
+    if (key === 'board')     { setView('homeowner-form'); return }
     if (key === 'vendor')    { setView('vendor-form'); return }
     if (key === 'title')     { window.open('https://secure.condocerts.com/resale/', '_blank'); return }
     if (key === 'staff')     { setView('homeowner-form'); return }
@@ -332,7 +332,7 @@ export default function Home() {
     try { sessionStorage.setItem('maia_persona', JSON.stringify(role)) } catch { /* ignore */ }
     if (role.type === 'staff') { router.push('/admin'); return }
     if (role.type === 'owner') { router.push(`/my-account?id=${role.owner_id}&assoc=${role.association_code}`); return }
-    if (role.type === 'board') { window.open('https://pmitfp.cincwebaxis.com/', '_blank'); return }
+    if (role.type === 'board') { router.push(`/board?id=${role.board_member_id}&assoc=${role.association_code}`); return }
   }
 
   async function handleHomeownerLookup(e: React.FormEvent) {
