@@ -38,6 +38,29 @@ interface AssocOption {
   zip?: string | null
 }
 
+function VendorCoiCard({ assocData }: { assocData: AssocOption | undefined }) {
+  if (!assocData?.principal_address) {
+    return (
+      <div className="bg-[#f9fafb] border border-[#e5e7eb] rounded-[3px] p-3 text-[0.72rem] text-[#6b7280] leading-relaxed">
+        <span className="font-medium text-[#0d0d0d]">📋 COI Additional Insured</span><br/>
+        Contact <a href="mailto:billing@topfloridaproperties.com" className="text-[#f26a1b]">billing@topfloridaproperties.com</a> or call <a href="tel:+13059005077" className="text-[#f26a1b]">305.900.5077</a> for COI requirements for this association.
+      </div>
+    )
+  }
+  const addr = `${assocData.principal_address}, ${assocData.city}, ${assocData.state ?? 'FL'} ${assocData.zip}`
+  return (
+    <div className="bg-[#f0fdf4] border border-[#86efac] rounded-[3px] p-3 space-y-1.5">
+      <div className="text-[0.6rem] font-medium uppercase tracking-[0.1em] text-[#16a34a] [font-family:var(--font-mono)]">📋 COI Additional Insured Requirements</div>
+      <p className="text-[0.72rem] text-[#0d0d0d] leading-relaxed">Your Certificate of Insurance must list:</p>
+      <ol className="text-[0.72rem] text-[#0d0d0d] leading-relaxed space-y-1 list-decimal list-inside">
+        <li><span className="font-medium">{assocData.association_name}</span><br/><span className="text-[#6b7280] pl-4">{addr}</span></li>
+        <li><span className="font-medium">PMI Top Florida Properties</span><br/><span className="text-[#6b7280] pl-4">1031 Ives Dairy Road Suite 228, Miami, FL 33179</span></li>
+      </ol>
+      <p className="text-[0.68rem] text-[#6b7280] pt-1">Forward to your insurance agent · Questions? <a href="mailto:billing@topfloridaproperties.com" className="text-[#f26a1b]">billing@topfloridaproperties.com</a></p>
+    </div>
+  )
+}
+
 // ── Translations ─────────────────────────────────────────────────────────────
 
 interface Persona { key: string; icon: string; title: string; desc: string }
@@ -705,27 +728,7 @@ export default function Home() {
                 <AssocSelect value={vdAssoc} onChange={setVdAssoc} label={t.vendorAssoc} />
 
                 {/* COI additional insured card — shows immediately on association selection */}
-                {vdAssoc && (() => {
-                  const assocData = associations.find(a => a.association_name === vdAssoc)
-                  if (!assocData?.principal_address) return (
-                    <div className="bg-[#f9fafb] border border-[#e5e7eb] rounded-[3px] p-3 text-[0.72rem] text-[#6b7280] leading-relaxed">
-                      <span className="font-medium text-[#0d0d0d]">📋 COI Additional Insured</span><br/>
-                      Contact <a href="mailto:billing@topfloridaproperties.com" className="text-[#f26a1b]">billing@topfloridaproperties.com</a> or call <a href="tel:+13059005077" className="text-[#f26a1b]">305.900.5077</a> for COI requirements for this association.
-                    </div>
-                  )
-                  const addr = `${assocData.principal_address}, ${assocData.city}, ${assocData.state ?? 'FL'} ${assocData.zip}`
-                  return (
-                    <div className="bg-[#f0fdf4] border border-[#86efac] rounded-[3px] p-3 space-y-1.5">
-                      <div className="text-[0.6rem] font-medium uppercase tracking-[0.1em] text-[#16a34a] [font-family:var(--font-mono)]">📋 COI Additional Insured Requirements</div>
-                      <p className="text-[0.72rem] text-[#0d0d0d] leading-relaxed">Your Certificate of Insurance must list:</p>
-                      <ol className="text-[0.72rem] text-[#0d0d0d] leading-relaxed space-y-1 list-decimal list-inside">
-                        <li><span className="font-medium">{assocData.association_name}</span><br/><span className="text-[#6b7280] pl-4">{addr}</span></li>
-                        <li><span className="font-medium">PMI Top Florida Properties</span><br/><span className="text-[#6b7280] pl-4">1031 Ives Dairy Road Suite 228, Miami, FL 33179</span></li>
-                      </ol>
-                      <p className="text-[0.68rem] text-[#6b7280] pt-1">Forward to your insurance agent · Questions? <a href="mailto:billing@topfloridaproperties.com" className="text-[#f26a1b]">billing@topfloridaproperties.com</a></p>
-                    </div>
-                  )
-                })()}
+                {vdAssoc && <VendorCoiCard assocData={associations.find(a => a.association_name === vdAssoc)} />}
 
                 <OrangeBtn label={busy ? t.vendorBusy : t.vendorSendBtn} disabled={busy} />
               </form>

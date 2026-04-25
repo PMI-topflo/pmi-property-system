@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const vendorHtml = `
     <div style="font-family:Arial,sans-serif;max-width:560px">
       <h2 style="color:#111">Welcome to PMI Top Florida Properties</h2>
-      <p>Thank you for your inquiry, <strong>${contactName || companyName}</strong>. To set up vendor payments and get started working with us, please complete the following:</p>
+      <p>Thank you for your inquiry, <strong>${contactName || companyName}</strong>. To start working with us, please complete the following:</p>
 
       <h3 style="color:#f97316;font-size:15px;margin-top:24px">📄 Required Documents</h3>
 
