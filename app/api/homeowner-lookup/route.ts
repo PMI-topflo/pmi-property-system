@@ -11,7 +11,28 @@ export async function POST(req: NextRequest) {
   // Normalize phone to last 10 digits for flexible matching
   const digits = (phone ?? '').replace(/\D/g, '').slice(-10)
 
-  // Search owners table
+  // ── Staff check (silent — never exposed in response) ──────────────────────
+  {
+    let staffQuery = supabaseAdmin
+      .from('pmi_staff')
+      .select('id')
+      .eq('active', true)
+
+    if (email && digits.length >= 7) {
+      staffQuery = staffQuery.or(`email.ilike.%${email}%,phone.ilike.%${digits}%`)
+    } else if (email) {
+      staffQuery = staffQuery.ilike('email', `%${email}%`)
+    } else {
+      staffQuery = staffQuery.ilike('phone', `%${digits}%`)
+    }
+
+    const { data: staff } = await staffQuery.limit(1).single()
+    if (staff?.id) {
+      return NextResponse.json({ found: true, staff: true })
+    }
+  }
+
+  // ── Search owners table ────────────────────────────────────────────────────
   if (email) {
     const { data: byEmail } = await supabaseAdmin
       .from('owners')
@@ -38,7 +59,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Search association_tenants table
+  // ── Search association_tenants table ───────────────────────────────────────
   if (email) {
     const { data: tenantByEmail } = await supabaseAdmin
       .from('association_tenants')

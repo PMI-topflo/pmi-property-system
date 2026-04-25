@@ -322,7 +322,9 @@ export default function Home() {
         body: JSON.stringify({ firstName: hwFirst, lastName: hwLast, email: hwEmail, phone: hwPhone }),
       })
       const data = await res.json()
-      if (data.found && data.association_code) {
+      if (data.found && data.staff) {
+        router.push('/admin')
+      } else if (data.found && data.association_code) {
         router.push(`/${data.association_code.toLowerCase()}`)
       } else {
         setView('homeowner-notfound')
