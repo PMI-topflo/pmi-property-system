@@ -2,10 +2,16 @@ export default function PageBrook() {
   return (
     <main className="assoc-page">
 
+      {/* Top bar */}
+      <div className="assoc-topbar">
+        <span className="assoc-topbar-l">WHATSAPP 24/7 · WE SPEAK ENGLISH, SPANISH, FRENCH &amp; PORTUGUESE</span>
+        <span className="assoc-topbar-r">305.900.5077</span>
+      </div>
+
       {/* Header */}
       <div className="assoc-hero">
         <div className="assoc-hero-inner">
-          <div className="assoc-logo">🏢</div>
+          <a href="/" className="assoc-logo"></a>
           <div>
             <h1 className="assoc-title">Brook Haven of Boca Raton Property Owners Association, Inc.</h1>
             <p className="assoc-code">Association Code: BHB</p>

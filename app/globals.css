@@ -68,6 +68,27 @@ body {
   padding-bottom: 3rem;
 }
 
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+.assoc-topbar {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  background:      var(--gold);
+  padding:         0.35rem 1.5rem;
+  gap:             1rem;
+}
+.assoc-topbar-l,
+.assoc-topbar-r {
+  font-family:    var(--font-mono);
+  font-size:      0.6rem;
+  font-weight:    500;
+  color:          #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space:    nowrap;
+}
+.assoc-topbar-l { overflow: hidden; text-overflow: ellipsis; }
+
 /* ── Hero / Header ───────────────────────────────────────────────────────── */
 .assoc-hero {
   background: var(--navy);
@@ -82,12 +103,15 @@ body {
   margin:     0 auto;
 }
 .assoc-logo {
+  display:           block;
   font-size:         0;
   flex-shrink:       0;
   width:             130px;
   height:            44px;
   background:        url('/pmi-logo.jpg') no-repeat left center;
   background-size:   contain;
+  text-decoration:   none;
+  outline:           none;
 }
 .assoc-title {
   font-family: var(--font-display);

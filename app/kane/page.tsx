@@ -2,10 +2,16 @@ export default function PageKane() {
   return (
     <main className="assoc-page">
 
+      {/* Top bar */}
+      <div className="assoc-topbar">
+        <span className="assoc-topbar-l">WHATSAPP 24/7 · WE SPEAK ENGLISH, SPANISH, FRENCH &amp; PORTUGUESE</span>
+        <span className="assoc-topbar-r">305.900.5077</span>
+      </div>
+
       {/* Header */}
       <div className="assoc-hero">
         <div className="assoc-hero-inner">
-          <div className="assoc-logo">🏢</div>
+          <a href="/" className="assoc-logo"></a>
           <div>
             <h1 className="assoc-title">1080-1090 Kane Concourse Condominium Association, Inc.</h1>
             <p className="assoc-code">Association Code: KANE</p>
