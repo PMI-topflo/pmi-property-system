@@ -14,18 +14,38 @@ export async function POST(req: NextRequest) {
     <div style="font-family:Arial,sans-serif;max-width:560px">
       <h2 style="color:#111">Welcome to PMI Top Florida Properties</h2>
       <p>Thank you for your inquiry, <strong>${contactName || companyName}</strong>. To set up vendor payments and get started working with us, please complete the following:</p>
-      <h3 style="color:#f97316;font-size:15px;margin-top:24px">📄 Required Forms</h3>
-      <ul style="line-height:1.8">
-        <li><strong>Vendor ACH Form</strong> — for electronic payment setup. Download from your association's portal page or email billing@topfloridaproperties.com.</li>
-        <li><strong>Certificate of Insurance (COI)</strong> — required before any work begins. Send to service@topfloridaproperties.com.</li>
-      </ul>
+
+      <h3 style="color:#f97316;font-size:15px;margin-top:24px">📄 Required Documents</h3>
+
+      <table style="width:100%;border-collapse:collapse;margin-top:12px">
+        <tr>
+          <td style="padding:12px 16px;background:#fff8f4;border:1px solid #fed7aa;border-radius:4px">
+            <strong style="display:block;margin-bottom:4px">Vendor ACH Authorization Form</strong>
+            <span style="font-size:13px;color:#555">Required for electronic payment setup via ACH direct deposit.</span><br/>
+            <a href="https://www.pmitop.com/vendor-ach-form.pdf" style="display:inline-block;margin-top:10px;background:#f97316;color:#fff;text-decoration:none;font-size:12px;font-weight:600;padding:7px 16px;border-radius:3px;letter-spacing:0.05em">
+              ⬇ Download ACH Form
+            </a>
+          </td>
+        </tr>
+      </table>
+
+      <table style="width:100%;border-collapse:collapse;margin-top:10px">
+        <tr>
+          <td style="padding:12px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px">
+            <strong style="display:block;margin-bottom:4px">Certificate of Insurance (COI)</strong>
+            <span style="font-size:13px;color:#555">Required before any work begins.${association ? ` Additional insured requirements for <strong>${association}</strong> will be provided by our team.` : ' Your association\'s additional insured requirements will be provided by our team.'}</span><br/>
+            <span style="font-size:12px;color:#888;margin-top:6px;display:block">Send completed COI to: <a href="mailto:service@topfloridaproperties.com">service@topfloridaproperties.com</a></span>
+          </td>
+        </tr>
+      </table>
+
       <h3 style="color:#f97316;font-size:15px;margin-top:24px">📬 Contact</h3>
       <ul style="line-height:1.8">
         <li>Billing &amp; ACH: <a href="mailto:billing@topfloridaproperties.com">billing@topfloridaproperties.com</a></li>
         <li>Service Coordination: <a href="mailto:service@topfloridaproperties.com">service@topfloridaproperties.com</a></li>
         <li>Phone: (305) 900-5077</li>
       </ul>
-      ${association ? `<p><strong>Association:</strong> ${association}</p>` : ''}
+      ${association ? `<p style="margin-top:16px"><strong>Association:</strong> ${association}</p>` : ''}
       <p style="color:#888;font-size:12px;margin-top:24px">PMI Top Florida Properties · 305.900.5077 · PMI@topfloridaproperties.com</p>
     </div>
   `

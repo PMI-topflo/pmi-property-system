@@ -649,6 +649,32 @@ export default function Home() {
         {view === 'vendor-form' && (
           <div className="max-w-md mx-auto">
             <BackBtn />
+
+            {/* Required documents card */}
+            <div className="bg-[#fff8f4] border border-[#f26a1b]/30 rounded-[3px] p-4 mb-4">
+              <div className="text-[0.6rem] font-medium uppercase tracking-[0.1em] text-[#f26a1b] [font-family:var(--font-mono)] mb-3">Required Documents for Vendors</div>
+              <div className="flex items-center justify-between gap-3 mb-2.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-base flex-shrink-0">📄</span>
+                  <span className="text-sm text-[#0d0d0d] font-medium leading-snug">Vendor ACH Authorization Form</span>
+                </div>
+                <a
+                  href="/vendor-ach-form.pdf"
+                  download
+                  className="flex-shrink-0 bg-[#f26a1b] hover:bg-[#f58140] text-white [font-family:var(--font-mono)] text-[0.58rem] uppercase tracking-[0.08em] px-3 py-1.5 rounded-[2px] transition-colors whitespace-nowrap"
+                >
+                  Download
+                </a>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-base flex-shrink-0">📋</span>
+                <div className="min-w-0">
+                  <span className="text-sm text-[#0d0d0d] font-medium">Certificate of Insurance (COI)</span>
+                  <p className="text-[0.7rem] text-[#6b7280] mt-0.5 leading-snug">Requirements will appear after selecting your association below.</p>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-white border border-[#e5e7eb] rounded-[3px] shadow-[0_1px_4px_rgba(13,13,13,.06)] p-6">
               <h2 className={`text-lg font-light text-[#0d0d0d] mb-1 [font-family:var(--font-display)] ${isRtl ? 'text-right' : ''}`}>{t.vendorTitle}</h2>
               <p className={`text-sm text-[#6b7280] mb-5 ${isRtl ? 'text-right' : ''}`}>{t.vendorSubtitle}</p>
@@ -683,7 +709,14 @@ export default function Home() {
             <div className="bg-white border border-[#e5e7eb] rounded-[3px] shadow-[0_1px_4px_rgba(13,13,13,.06)] p-6 text-center">
               <div className="text-4xl mb-3">✅</div>
               <h2 className="text-lg font-light text-[#0d0d0d] mb-2 [font-family:var(--font-display)]">{t.vendorSentTitle}</h2>
-              <p className="text-sm text-[#6b7280]">{t.vendorSentBody}</p>
+              <p className="text-sm text-[#6b7280] mb-5">{t.vendorSentBody}</p>
+              <a
+                href="/vendor-ach-form.pdf"
+                download
+                className="inline-flex items-center gap-2 bg-[#f26a1b] hover:bg-[#f58140] text-white [font-family:var(--font-mono)] text-[0.62rem] uppercase tracking-[0.08em] px-5 py-2.5 rounded-[2px] transition-colors"
+              >
+                📄 Download ACH Authorization Form
+              </a>
             </div>
           </div>
         )}
