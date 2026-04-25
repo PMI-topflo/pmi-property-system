@@ -2,9 +2,17 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 type Lang = 'en' | 'es' | 'pt' | 'fr' | 'he' | 'ru'
-type Step = 'persona' | 'association'
+type View =
+  | 'home'
+  | 'homeowner-form'
+  | 'homeowner-notfound'
+  | 'agent-form'
+  | 'agent-sent'
+  | 'vendor-form'
+  | 'vendor-sent'
 
 const LANG_TABS: { code: Lang; label: string }[] = [
   { code: 'en', label: 'EN' },
@@ -15,225 +23,415 @@ const LANG_TABS: { code: Lang; label: string }[] = [
   { code: 'ru', label: 'RU' },
 ]
 
-interface Persona {
-  key: string
-  icon: string
-  title: string
-  desc: string
-}
+const ASSOCIATIONS = [
+  { name: 'Abbott Avenue',       slug: 'abbott' },
+  { name: 'Brook',               slug: 'brook' },
+  { name: 'Crystal Heights',     slug: 'crystalh' },
+  { name: 'Del Vista',           slug: 'delvista' },
+  { name: 'Essi',                slug: 'essi' },
+  { name: 'Fifth',               slug: 'fifth' },
+  { name: 'Galleria V',          slug: 'galleriav' },
+  { name: 'Gold Key',            slug: 'goldkey' },
+  { name: 'Island House',        slug: 'islandhouse' },
+  { name: 'Kane',                slug: 'kane' },
+  { name: 'Kim Garden',          slug: 'kimgarden' },
+  { name: 'La Farms',            slug: 'lafarms' },
+  { name: 'Lakeview',            slug: 'lakeview' },
+  { name: 'Maco',                slug: 'maco' },
+  { name: 'Manors XI',           slug: 'manorsxi' },
+  { name: 'One Bay',             slug: 'onebay' },
+  { name: 'Parcview',            slug: 'parcview' },
+  { name: 'Serenity IV',         slug: 'serenityiv' },
+  { name: 'Shoreland',           slug: 'shoreland' },
+  { name: 'Venetian 1',          slug: 'venetian1' },
+  { name: 'Venetian 2',          slug: 'venetian2' },
+  { name: 'Venetian 5',          slug: 'venetian5' },
+  { name: 'Venetian Recreation', slug: 'venetianrec' },
+  { name: 'Wedgewood 57',        slug: 'wedgewood57' },
+  { name: 'Wedgewood Ansin',     slug: 'wedgewoodansin' },
+]
 
-interface Translations {
-  tagline: string
-  welcome: string
-  subtitle: string
-  chooseAssoc: string
-  searchPlaceholder: string
-  noResults: string
-  back: string
-  contact: string
+// ── Translations ─────────────────────────────────────────────────────────────
+
+interface Persona { key: string; icon: string; title: string; desc: string }
+interface T {
+  welcome: string; subtitle: string; back: string; contact: string
+  lookupTitle: string; lookupSubtitle: string
+  firstName: string; lastName: string; email: string; phone: string
+  lookupBtn: string; lookupBusy: string
+  notFoundTitle: string; notFoundBody: string
+  agentTitle: string; agentSubtitle: string
+  agentName: string; agentLicense: string; agentAssoc: string; agentSendBtn: string; agentBusy: string
+  agentSentTitle: string; agentSentBody: string
+  vendorTitle: string; vendorSubtitle: string
+  company: string; contactName: string; vendorAssoc: string; vendorSendBtn: string; vendorBusy: string
+  vendorSentTitle: string; vendorSentBody: string
+  selectAssoc: string
   personas: Persona[]
 }
 
-const T: Record<Lang, Translations> = {
+const COPY: Record<Lang, T> = {
   en: {
-    tagline: 'PMI Top Florida Properties',
-    welcome: 'Welcome to MAIA',
-    subtitle: 'How can we help you today?',
-    chooseAssoc: 'Select Your Association',
-    searchPlaceholder: 'Search associations…',
-    noResults: 'No associations found',
+    welcome: 'How can we help you today?',
+    subtitle: 'Select who you are to get started.',
     back: '← Back',
     contact: 'Questions?',
+    lookupTitle: 'Find Your Association',
+    lookupSubtitle: 'Enter your contact info to look up your account.',
+    firstName: 'First Name', lastName: 'Last Name', email: 'Email Address', phone: 'Phone Number',
+    lookupBtn: 'Look Up My Account', lookupBusy: 'Looking up…',
+    notFoundTitle: 'Account Not Found',
+    notFoundBody: 'We couldn\'t find an account matching that information. Please contact PMI directly:',
+    agentTitle: 'Real Estate Agent Inquiry',
+    agentSubtitle: 'Our team will reach out within one business day.',
+    agentName: 'Full Name', agentLicense: 'License Number', agentAssoc: 'Association',
+    agentSendBtn: 'Submit Inquiry', agentBusy: 'Sending…',
+    agentSentTitle: 'Inquiry Received',
+    agentSentBody: 'Thank you! Our team will be in touch within one business day.',
+    vendorTitle: 'Vendor Inquiry',
+    vendorSubtitle: 'Submit your info and we\'ll send you the ACH and COI forms.',
+    company: 'Company Name', contactName: 'Contact Name', vendorAssoc: 'Association',
+    vendorSendBtn: 'Submit', vendorBusy: 'Sending…',
+    vendorSentTitle: 'Thank You!',
+    vendorSentBody: 'We\'ve sent the required forms to your email. Our billing team will follow up shortly.',
+    selectAssoc: '— Select Association —',
     personas: [
-      { key: 'homeowner', icon: '🏠', title: 'Homeowner / Resident', desc: 'Access your association portal, documents & services' },
-      { key: 'applicant', icon: '📋', title: 'Rental Applicant', desc: 'Apply to rent or purchase in one of our communities' },
-      { key: 'agent',     icon: '🏢', title: 'Real Estate Agent',   desc: 'Tools for listings, buyers & estoppel — text us to begin' },
-      { key: 'board',     icon: '👥', title: 'Board Member',         desc: 'Review invoices, approvals & association management' },
-      { key: 'vendor',    icon: '🔧', title: 'Vendor / Contractor',  desc: 'Submit invoices, set up ACH & coordinate with our team' },
-      { key: 'buyer',     icon: '🏡', title: 'Buyer Applicant',       desc: 'Apply to purchase a unit in one of our communities' },
-      { key: 'title',     icon: '🏛️', title: 'Title Company',         desc: 'Estoppel requests, closing documents & transaction coordination' },
-      { key: 'staff',     icon: '🔒', title: 'PMI Staff',            desc: 'Internal management dashboard' },
+      { key: 'homeowner', icon: '🏠', title: 'Homeowner / Resident',  desc: 'Access your association portal & services' },
+      { key: 'applicant', icon: '📋', title: 'Rental Applicant',       desc: 'Apply to rent in one of our communities' },
+      { key: 'agent',     icon: '🏢', title: 'Real Estate Agent',      desc: 'Listings, buyers & estoppel requests' },
+      { key: 'board',     icon: '👥', title: 'Board Member',           desc: 'Review invoices & approvals' },
+      { key: 'vendor',    icon: '🔧', title: 'Vendor / Contractor',    desc: 'Invoices, ACH setup & coordination' },
+      { key: 'buyer',     icon: '🏡', title: 'Buyer Applicant',        desc: 'Apply to purchase a unit' },
+      { key: 'title',     icon: '🏛️', title: 'Title Company',          desc: 'Estoppel requests & closing documents' },
+      { key: 'staff',     icon: '🔒', title: 'PMI Staff',              desc: 'Internal dashboard' },
     ],
   },
   es: {
-    tagline: 'PMI Top Florida Properties',
-    welcome: 'Bienvenido a MAIA',
-    subtitle: '¿Cómo podemos ayudarte hoy?',
-    chooseAssoc: 'Selecciona Tu Asociación',
-    searchPlaceholder: 'Buscar asociaciones…',
-    noResults: 'No se encontraron asociaciones',
+    welcome: '¿Cómo podemos ayudarte hoy?',
+    subtitle: 'Selecciona quién eres para comenzar.',
     back: '← Volver',
     contact: '¿Preguntas?',
+    lookupTitle: 'Encuentra Tu Asociación',
+    lookupSubtitle: 'Ingresa tu información de contacto para buscar tu cuenta.',
+    firstName: 'Nombre', lastName: 'Apellido', email: 'Correo Electrónico', phone: 'Número de Teléfono',
+    lookupBtn: 'Buscar Mi Cuenta', lookupBusy: 'Buscando…',
+    notFoundTitle: 'Cuenta No Encontrada',
+    notFoundBody: 'No encontramos una cuenta con esa información. Por favor contacta a PMI directamente:',
+    agentTitle: 'Consulta de Agente Inmobiliario',
+    agentSubtitle: 'Nuestro equipo se comunicará en un día hábil.',
+    agentName: 'Nombre Completo', agentLicense: 'Número de Licencia', agentAssoc: 'Asociación',
+    agentSendBtn: 'Enviar Consulta', agentBusy: 'Enviando…',
+    agentSentTitle: 'Consulta Recibida',
+    agentSentBody: '¡Gracias! Nuestro equipo se comunicará en un día hábil.',
+    vendorTitle: 'Consulta de Proveedor',
+    vendorSubtitle: 'Envía tu información y te enviaremos los formularios ACH y COI.',
+    company: 'Nombre de la Empresa', contactName: 'Nombre de Contacto', vendorAssoc: 'Asociación',
+    vendorSendBtn: 'Enviar', vendorBusy: 'Enviando…',
+    vendorSentTitle: '¡Gracias!',
+    vendorSentBody: 'Hemos enviado los formularios requeridos a tu correo. Nuestro equipo de facturación hará seguimiento.',
+    selectAssoc: '— Seleccionar Asociación —',
     personas: [
-      { key: 'homeowner', icon: '🏠', title: 'Propietario / Residente',  desc: 'Accede al portal de tu asociación, documentos y servicios' },
-      { key: 'applicant', icon: '📋', title: 'Solicitante de Alquiler',   desc: 'Solicita alquilar o comprar en una de nuestras comunidades' },
-      { key: 'agent',     icon: '🏢', title: 'Agente de Bienes Raíces',   desc: 'Herramientas para propiedades, compradores y estoppel — escríbenos' },
-      { key: 'board',     icon: '👥', title: 'Miembro de la Junta',       desc: 'Revisa facturas, aprobaciones y gestión de la asociación' },
-      { key: 'vendor',    icon: '🔧', title: 'Proveedor / Contratista',   desc: 'Envía facturas, configura ACH y coordina con nuestro equipo' },
-      { key: 'buyer',     icon: '🏡', title: 'Comprador',                 desc: 'Solicita la compra de una unidad en nuestras comunidades' },
-      { key: 'title',     icon: '🏛️', title: 'Compañía de Título',        desc: 'Solicitudes de estoppel, documentos de cierre y coordinación' },
-      { key: 'staff',     icon: '🔒', title: 'Personal PMI',              desc: 'Panel de administración interno' },
+      { key: 'homeowner', icon: '🏠', title: 'Propietario / Residente', desc: 'Accede al portal de tu asociación' },
+      { key: 'applicant', icon: '📋', title: 'Solicitante de Alquiler',  desc: 'Solicita alquilar en nuestras comunidades' },
+      { key: 'agent',     icon: '🏢', title: 'Agente de Bienes Raíces',  desc: 'Propiedades, compradores y estoppel' },
+      { key: 'board',     icon: '👥', title: 'Miembro de la Junta',      desc: 'Revisa facturas y aprobaciones' },
+      { key: 'vendor',    icon: '🔧', title: 'Proveedor / Contratista',  desc: 'Facturas, ACH y coordinación' },
+      { key: 'buyer',     icon: '🏡', title: 'Comprador',                desc: 'Solicita la compra de una unidad' },
+      { key: 'title',     icon: '🏛️', title: 'Compañía de Título',       desc: 'Estoppel y documentos de cierre' },
+      { key: 'staff',     icon: '🔒', title: 'Personal PMI',             desc: 'Panel interno' },
     ],
   },
   pt: {
-    tagline: 'PMI Top Florida Properties',
-    welcome: 'Bem-vindo ao MAIA',
-    subtitle: 'Como podemos ajudá-lo hoje?',
-    chooseAssoc: 'Selecione Sua Associação',
-    searchPlaceholder: 'Buscar associações…',
-    noResults: 'Nenhuma associação encontrada',
+    welcome: 'Como podemos ajudá-lo hoje?',
+    subtitle: 'Selecione quem você é para começar.',
     back: '← Voltar',
     contact: 'Dúvidas?',
+    lookupTitle: 'Encontre Sua Associação',
+    lookupSubtitle: 'Digite suas informações de contato para encontrar sua conta.',
+    firstName: 'Nome', lastName: 'Sobrenome', email: 'E-mail', phone: 'Telefone',
+    lookupBtn: 'Buscar Minha Conta', lookupBusy: 'Buscando…',
+    notFoundTitle: 'Conta Não Encontrada',
+    notFoundBody: 'Não encontramos uma conta com essas informações. Entre em contato com a PMI:',
+    agentTitle: 'Consulta de Corretor',
+    agentSubtitle: 'Nossa equipe entrará em contato em um dia útil.',
+    agentName: 'Nome Completo', agentLicense: 'Número de Licença', agentAssoc: 'Associação',
+    agentSendBtn: 'Enviar Consulta', agentBusy: 'Enviando…',
+    agentSentTitle: 'Consulta Recebida',
+    agentSentBody: 'Obrigado! Nossa equipe entrará em contato em um dia útil.',
+    vendorTitle: 'Consulta de Fornecedor',
+    vendorSubtitle: 'Envie suas informações e enviaremos os formulários ACH e COI.',
+    company: 'Nome da Empresa', contactName: 'Nome do Contato', vendorAssoc: 'Associação',
+    vendorSendBtn: 'Enviar', vendorBusy: 'Enviando…',
+    vendorSentTitle: 'Obrigado!',
+    vendorSentBody: 'Enviamos os formulários necessários para seu e-mail. Nossa equipe de cobrança entrará em contato.',
+    selectAssoc: '— Selecionar Associação —',
     personas: [
-      { key: 'homeowner', icon: '🏠', title: 'Proprietário / Residente',  desc: 'Acesse o portal da sua associação, documentos e serviços' },
-      { key: 'applicant', icon: '📋', title: 'Candidato a Inquilino',     desc: 'Candidate-se para alugar ou comprar em nossas comunidades' },
-      { key: 'agent',     icon: '🏢', title: 'Corretor de Imóveis',       desc: 'Ferramentas para imóveis, compradores e estoppel — envie mensagem' },
-      { key: 'board',     icon: '👥', title: 'Membro da Diretoria',       desc: 'Revise faturas, aprovações e gestão da associação' },
-      { key: 'vendor',    icon: '🔧', title: 'Fornecedor / Contratado',   desc: 'Envie faturas, configure ACH e coordene com nossa equipe' },
-      { key: 'buyer',     icon: '🏡', title: 'Comprador',                 desc: 'Solicite a compra de uma unidade em nossas comunidades' },
-      { key: 'title',     icon: '🏛️', title: 'Empresa de Título',         desc: 'Solicitações de estoppel, documentos de fechamento e coordenação' },
-      { key: 'staff',     icon: '🔒', title: 'Equipe PMI',                desc: 'Painel de gerenciamento interno' },
+      { key: 'homeowner', icon: '🏠', title: 'Proprietário / Residente', desc: 'Acesse o portal da sua associação' },
+      { key: 'applicant', icon: '📋', title: 'Candidato a Inquilino',    desc: 'Candidate-se em nossas comunidades' },
+      { key: 'agent',     icon: '🏢', title: 'Corretor de Imóveis',      desc: 'Imóveis, compradores e estoppel' },
+      { key: 'board',     icon: '👥', title: 'Membro da Diretoria',      desc: 'Revise faturas e aprovações' },
+      { key: 'vendor',    icon: '🔧', title: 'Fornecedor / Contratado',  desc: 'Faturas, ACH e coordenação' },
+      { key: 'buyer',     icon: '🏡', title: 'Comprador',                desc: 'Solicite a compra de uma unidade' },
+      { key: 'title',     icon: '🏛️', title: 'Empresa de Título',        desc: 'Estoppel e documentos de fechamento' },
+      { key: 'staff',     icon: '🔒', title: 'Equipe PMI',               desc: 'Painel interno' },
     ],
   },
   fr: {
-    tagline: 'PMI Top Florida Properties',
-    welcome: 'Bienvenue sur MAIA',
-    subtitle: "Comment pouvons-nous vous aider aujourd'hui ?",
-    chooseAssoc: 'Sélectionnez Votre Association',
-    searchPlaceholder: 'Rechercher des associations…',
-    noResults: 'Aucune association trouvée',
+    welcome: 'Comment pouvons-nous vous aider ?',
+    subtitle: 'Sélectionnez qui vous êtes pour commencer.',
     back: '← Retour',
-    contact: 'Questions ?',
+    contact: 'Questions ?',
+    lookupTitle: 'Trouver Votre Association',
+    lookupSubtitle: 'Entrez vos coordonnées pour rechercher votre compte.',
+    firstName: 'Prénom', lastName: 'Nom', email: 'Adresse E-mail', phone: 'Numéro de Téléphone',
+    lookupBtn: 'Rechercher Mon Compte', lookupBusy: 'Recherche…',
+    notFoundTitle: 'Compte Introuvable',
+    notFoundBody: 'Nous n\'avons pas trouvé de compte correspondant. Veuillez contacter PMI directement :',
+    agentTitle: 'Demande Agent Immobilier',
+    agentSubtitle: 'Notre équipe vous contactera dans un jour ouvrable.',
+    agentName: 'Nom Complet', agentLicense: 'Numéro de Licence', agentAssoc: 'Association',
+    agentSendBtn: 'Soumettre', agentBusy: 'Envoi…',
+    agentSentTitle: 'Demande Reçue',
+    agentSentBody: 'Merci ! Notre équipe vous contactera dans un jour ouvrable.',
+    vendorTitle: 'Demande Fournisseur',
+    vendorSubtitle: 'Soumettez vos infos et nous vous enverrons les formulaires ACH et COI.',
+    company: 'Nom de la Société', contactName: 'Nom du Contact', vendorAssoc: 'Association',
+    vendorSendBtn: 'Envoyer', vendorBusy: 'Envoi…',
+    vendorSentTitle: 'Merci !',
+    vendorSentBody: 'Nous avons envoyé les formulaires requis à votre adresse e-mail.',
+    selectAssoc: '— Sélectionner une Association —',
     personas: [
-      { key: 'homeowner', icon: '🏠', title: 'Propriétaire / Résident',   desc: 'Accédez au portail de votre association, documents et services' },
-      { key: 'applicant', icon: '📋', title: 'Candidat Locataire',        desc: 'Postulez pour louer ou acheter dans nos communautés' },
-      { key: 'agent',     icon: '🏢', title: 'Agent Immobilier',          desc: 'Outils pour annonces, acheteurs et estoppel — écrivez-nous' },
-      { key: 'board',     icon: '👥', title: 'Membre du Conseil',         desc: "Consultez les factures, approbations et gestion de l'association" },
-      { key: 'vendor',    icon: '🔧', title: 'Fournisseur / Entrepreneur', desc: 'Soumettez des factures, configurez ACH et coordonnez avec nous' },
-      { key: 'buyer',     icon: '🏡', title: 'Acheteur',                  desc: "Demandez l'achat d'une unité dans nos communautés" },
-      { key: 'title',     icon: '🏛️', title: 'Société de Titre',          desc: "Demandes d'estoppel, documents de clôture et coordination" },
-      { key: 'staff',     icon: '🔒', title: 'Personnel PMI',             desc: 'Tableau de bord de gestion interne' },
+      { key: 'homeowner', icon: '🏠', title: 'Propriétaire / Résident',  desc: 'Accédez au portail de votre association' },
+      { key: 'applicant', icon: '📋', title: 'Candidat Locataire',       desc: 'Postulez dans nos communautés' },
+      { key: 'agent',     icon: '🏢', title: 'Agent Immobilier',         desc: 'Annonces, acheteurs et estoppel' },
+      { key: 'board',     icon: '👥', title: 'Membre du Conseil',        desc: 'Factures et approbations' },
+      { key: 'vendor',    icon: '🔧', title: 'Fournisseur',              desc: 'Factures, ACH et coordination' },
+      { key: 'buyer',     icon: '🏡', title: 'Acheteur',                 desc: "Demandez l'achat d'une unité" },
+      { key: 'title',     icon: '🏛️', title: 'Société de Titre',         desc: "Estoppel et documents de clôture" },
+      { key: 'staff',     icon: '🔒', title: 'Personnel PMI',            desc: 'Tableau de bord interne' },
     ],
   },
   he: {
-    tagline: 'PMI Top Florida Properties',
-    welcome: 'ברוכים הבאים ל-MAIA',
-    subtitle: 'כיצד נוכל לעזור לך היום?',
-    chooseAssoc: 'בחר את העמותה שלך',
-    searchPlaceholder: 'חפש עמותות…',
-    noResults: 'לא נמצאו עמותות',
+    welcome: 'כיצד נוכל לעזור לך היום?',
+    subtitle: 'בחר מי אתה כדי להתחיל.',
     back: 'חזרה →',
     contact: 'שאלות?',
+    lookupTitle: 'מצא את העמותה שלך',
+    lookupSubtitle: 'הזן את פרטי הקשר שלך כדי לחפש את חשבונך.',
+    firstName: 'שם פרטי', lastName: 'שם משפחה', email: 'כתובת מייל', phone: 'מספר טלפון',
+    lookupBtn: 'חפש את חשבוני', lookupBusy: 'מחפש…',
+    notFoundTitle: 'חשבון לא נמצא',
+    notFoundBody: 'לא מצאנו חשבון עם הפרטים האלה. אנא פנה ישירות ל-PMI:',
+    agentTitle: 'פנייה של סוכן נדל"ן',
+    agentSubtitle: 'הצוות שלנו יחזור אליך תוך יום עסקים אחד.',
+    agentName: 'שם מלא', agentLicense: 'מספר רישיון', agentAssoc: 'עמותה',
+    agentSendBtn: 'שלח פנייה', agentBusy: 'שולח…',
+    agentSentTitle: 'הפנייה התקבלה',
+    agentSentBody: 'תודה! הצוות שלנו יצור קשר תוך יום עסקים אחד.',
+    vendorTitle: 'פנייה של ספק',
+    vendorSubtitle: 'שלח את הפרטים שלך ונשלח לך את טפסי ה-ACH וה-COI.',
+    company: 'שם החברה', contactName: 'שם איש הקשר', vendorAssoc: 'עמותה',
+    vendorSendBtn: 'שלח', vendorBusy: 'שולח…',
+    vendorSentTitle: 'תודה!',
+    vendorSentBody: 'שלחנו את הטפסים הנדרשים לכתובת המייל שלך.',
+    selectAssoc: '— בחר עמותה —',
     personas: [
-      { key: 'homeowner', icon: '🏠', title: 'בעל דירה / תושב',   desc: 'גש לפורטל העמותה שלך, מסמכים ושירותים' },
-      { key: 'applicant', icon: '📋', title: 'מועמד לשכירות',      desc: 'הגש מועמדות לשכירות או רכישה בקהילות שלנו' },
-      { key: 'agent',     icon: '🏢', title: 'סוכן נדל"ן',         desc: 'כלים עבור רישומים, קונים ו-estoppel — שלח הודעה להתחלה' },
-      { key: 'board',     icon: '👥', title: 'חבר ועד',            desc: 'סקור חשבוניות, אישורים וניהול העמותה' },
-      { key: 'vendor',    icon: '🔧', title: 'ספק / קבלן',         desc: 'שלח חשבוניות, הגדר ACH ותאם עם הצוות שלנו' },
-      { key: 'buyer',     icon: '🏡', title: 'קונה דירה',          desc: 'הגש מועמדות לרכישת דירה בקהילות שלנו' },
-      { key: 'title',     icon: '🏛️', title: 'חברת טייטל',         desc: 'בקשות estoppel, מסמכי סגירה ותיאום עסקאות' },
-      { key: 'staff',     icon: '🔒', title: 'צוות PMI',           desc: 'לוח הניהול הפנימי' },
+      { key: 'homeowner', icon: '🏠', title: 'בעל דירה / תושב',  desc: 'גש לפורטל העמותה שלך' },
+      { key: 'applicant', icon: '📋', title: 'מועמד לשכירות',     desc: 'הגש מועמדות בקהילות שלנו' },
+      { key: 'agent',     icon: '🏢', title: 'סוכן נדל"ן',        desc: 'רישומים, קונים ו-estoppel' },
+      { key: 'board',     icon: '👥', title: 'חבר ועד',           desc: 'סקור חשבוניות ואישורים' },
+      { key: 'vendor',    icon: '🔧', title: 'ספק / קבלן',        desc: 'חשבוניות, ACH ותיאום' },
+      { key: 'buyer',     icon: '🏡', title: 'קונה דירה',         desc: 'הגש מועמדות לרכישה' },
+      { key: 'title',     icon: '🏛️', title: 'חברת טייטל',        desc: 'estoppel ומסמכי סגירה' },
+      { key: 'staff',     icon: '🔒', title: 'צוות PMI',          desc: 'לוח פנימי' },
     ],
   },
   ru: {
-    tagline: 'PMI Top Florida Properties',
-    welcome: 'Добро пожаловать в MAIA',
-    subtitle: 'Как мы можем вам помочь?',
-    chooseAssoc: 'Выберите Ассоциацию',
-    searchPlaceholder: 'Поиск ассоциаций…',
-    noResults: 'Ассоциации не найдены',
+    welcome: 'Как мы можем вам помочь?',
+    subtitle: 'Выберите, кто вы, чтобы начать.',
     back: '← Назад',
     contact: 'Вопросы?',
+    lookupTitle: 'Найти Вашу Ассоциацию',
+    lookupSubtitle: 'Введите контактные данные для поиска вашего аккаунта.',
+    firstName: 'Имя', lastName: 'Фамилия', email: 'Электронная почта', phone: 'Номер телефона',
+    lookupBtn: 'Найти мой аккаунт', lookupBusy: 'Поиск…',
+    notFoundTitle: 'Аккаунт не найден',
+    notFoundBody: 'Мы не нашли аккаунт с этими данными. Свяжитесь с PMI напрямую:',
+    agentTitle: 'Запрос агента по недвижимости',
+    agentSubtitle: 'Наша команда свяжется с вами в течение одного рабочего дня.',
+    agentName: 'Полное имя', agentLicense: 'Номер лицензии', agentAssoc: 'Ассоциация',
+    agentSendBtn: 'Отправить запрос', agentBusy: 'Отправка…',
+    agentSentTitle: 'Запрос получен',
+    agentSentBody: 'Спасибо! Наша команда свяжется с вами в течение одного рабочего дня.',
+    vendorTitle: 'Запрос поставщика',
+    vendorSubtitle: 'Отправьте данные и мы вышлем вам формы ACH и COI.',
+    company: 'Название компании', contactName: 'Имя контактного лица', vendorAssoc: 'Ассоциация',
+    vendorSendBtn: 'Отправить', vendorBusy: 'Отправка…',
+    vendorSentTitle: 'Спасибо!',
+    vendorSentBody: 'Мы отправили необходимые формы на ваш email. Наша команда по выставлению счетов свяжется с вами.',
+    selectAssoc: '— Выберите ассоциацию —',
     personas: [
-      { key: 'homeowner', icon: '🏠', title: 'Домовладелец / Житель',     desc: 'Доступ к порталу ассоциации, документам и услугам' },
-      { key: 'applicant', icon: '📋', title: 'Арендатор / Покупатель',    desc: 'Подайте заявку на аренду или покупку в наших комплексах' },
-      { key: 'agent',     icon: '🏢', title: 'Агент по недвижимости',     desc: 'Инструменты для объявлений, покупателей и estoppel — напишите нам' },
-      { key: 'board',     icon: '👥', title: 'Член правления',            desc: 'Просмотр счетов, одобрений и управления ассоциацией' },
-      { key: 'vendor',    icon: '🔧', title: 'Поставщик / Подрядчик',    desc: 'Отправьте счета, настройте ACH и координируйте с нашей командой' },
-      { key: 'buyer',     icon: '🏡', title: 'Покупатель',                desc: 'Подайте заявку на покупку квартиры в наших комплексах' },
-      { key: 'title',     icon: '🏛️', title: 'Титульная Компания',        desc: 'Запросы estoppel, документы закрытия и координация сделок' },
-      { key: 'staff',     icon: '🔒', title: 'Персонал PMI',              desc: 'Внутренняя панель управления' },
+      { key: 'homeowner', icon: '🏠', title: 'Домовладелец / Житель',   desc: 'Доступ к порталу ассоциации' },
+      { key: 'applicant', icon: '📋', title: 'Арендатор',               desc: 'Подайте заявку в наших комплексах' },
+      { key: 'agent',     icon: '🏢', title: 'Агент по недвижимости',   desc: 'Объявления, покупатели и estoppel' },
+      { key: 'board',     icon: '👥', title: 'Член правления',          desc: 'Счета и одобрения' },
+      { key: 'vendor',    icon: '🔧', title: 'Поставщик / Подрядчик',  desc: 'Счета, ACH и координация' },
+      { key: 'buyer',     icon: '🏡', title: 'Покупатель',              desc: 'Подайте заявку на покупку' },
+      { key: 'title',     icon: '🏛️', title: 'Титульная Компания',      desc: 'Запросы estoppel и документы' },
+      { key: 'staff',     icon: '🔒', title: 'Персонал PMI',            desc: 'Внутренняя панель' },
     ],
   },
 }
 
-const ASSOCIATIONS = [
-  { name: 'Abbott Avenue',      slug: 'abbott' },
-  { name: 'Brook',              slug: 'brook' },
-  { name: 'Crystal Heights',    slug: 'crystalh' },
-  { name: 'Del Vista',          slug: 'delvista' },
-  { name: 'Essi',               slug: 'essi' },
-  { name: 'Fifth',              slug: 'fifth' },
-  { name: 'Galleria V',         slug: 'galleriav' },
-  { name: 'Gold Key',           slug: 'goldkey' },
-  { name: 'Island House',       slug: 'islandhouse' },
-  { name: 'Kane',               slug: 'kane' },
-  { name: 'Kim Garden',         slug: 'kimgarden' },
-  { name: 'La Farms',           slug: 'lafarms' },
-  { name: 'Lakeview',           slug: 'lakeview' },
-  { name: 'Maco',               slug: 'maco' },
-  { name: 'Manors XI',          slug: 'manorsxi' },
-  { name: 'One Bay',            slug: 'onebay' },
-  { name: 'Parcview',           slug: 'parcview' },
-  { name: 'Serenity IV',        slug: 'serenityiv' },
-  { name: 'Shoreland',          slug: 'shoreland' },
-  { name: 'Venetian 1',         slug: 'venetian1' },
-  { name: 'Venetian 2',         slug: 'venetian2' },
-  { name: 'Venetian 5',         slug: 'venetian5' },
-  { name: 'Venetian Recreation', slug: 'venetianrec' },
-  { name: 'Wedgewood 57',       slug: 'wedgewood57' },
-  { name: 'Wedgewood Ansin',    slug: 'wedgewoodansin' },
-]
+// ── Shared input/label styles ─────────────────────────────────────────────────
+const inputCls = 'w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white'
+const labelCls = 'block text-xs font-semibold text-gray-600 mb-1'
 
 export default function Home() {
   const router = useRouter()
-  const [lang, setLang] = useState<Lang>('en')
-  const [step, setStep] = useState<Step>('persona')
-  const [search, setSearch] = useState('')
+  const [lang, setLang]   = useState<Lang>('en')
+  const [view, setView]   = useState<View>('home')
+  const [busy, setBusy]   = useState(false)
 
-  const t = T[lang]
-  const isRtl = lang === 'he'
+  // Homeowner form
+  const [hwFirst, setHwFirst] = useState('')
+  const [hwLast,  setHwLast]  = useState('')
+  const [hwEmail, setHwEmail] = useState('')
+  const [hwPhone, setHwPhone] = useState('')
 
-  const filtered = useMemo(
-    () => ASSOCIATIONS.filter(a => a.name.toLowerCase().includes(search.toLowerCase())),
-    [search],
-  )
+  // Agent form
+  const [agName,    setAgName]    = useState('')
+  const [agEmail,   setAgEmail]   = useState('')
+  const [agPhone,   setAgPhone]   = useState('')
+  const [agLicense, setAgLicense] = useState('')
+  const [agAssoc,   setAgAssoc]   = useState('')
+
+  // Vendor form
+  const [vdCompany, setVdCompany] = useState('')
+  const [vdContact, setVdContact] = useState('')
+  const [vdEmail,   setVdEmail]   = useState('')
+  const [vdPhone,   setVdPhone]   = useState('')
+  const [vdAssoc,   setVdAssoc]   = useState('')
+
+  const t       = COPY[lang]
+  const isRtl   = lang === 'he'
+
+  // ── Handlers ────────────────────────────────────────────────────────────────
 
   function handlePersona(key: string) {
-    if (key === 'homeowner') { setStep('association'); return }
+    if (key === 'homeowner') { setView('homeowner-form'); return }
     if (key === 'applicant') { router.push('/apply'); return }
-    if (key === 'agent')     { window.open('https://wa.me/17866863223', '_blank'); return }
-    if (key === 'board')     { window.open('https://pmitfp.cincwebaxis.com/', '_blank'); return }
-    if (key === 'vendor')    { window.open('https://wa.me/17866863223', '_blank'); return }
     if (key === 'buyer')     { router.push('/apply'); return }
+    if (key === 'agent')     { setView('agent-form'); return }
+    if (key === 'board')     { window.open('https://pmitfp.cincwebaxis.com/', '_blank'); return }
+    if (key === 'vendor')    { setView('vendor-form'); return }
     if (key === 'title')     { window.open('https://secure.condocerts.com/resale/', '_blank'); return }
     if (key === 'staff')     { router.push('/admin'); return }
   }
 
-  function goBack() {
-    setStep('persona')
-    setSearch('')
+  async function handleHomeownerLookup(e: React.FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    try {
+      const res = await fetch('/api/homeowner-lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName: hwFirst, lastName: hwLast, email: hwEmail, phone: hwPhone }),
+      })
+      const data = await res.json()
+      if (data.found && data.association_code) {
+        router.push(`/${data.association_code.toLowerCase()}`)
+      } else {
+        setView('homeowner-notfound')
+      }
+    } catch {
+      setView('homeowner-notfound')
+    } finally {
+      setBusy(false)
+    }
   }
 
+  async function handleAgentSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    try {
+      await fetch('/api/agent-inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: agName, email: agEmail, phone: agPhone, licenseNumber: agLicense, association: agAssoc }),
+      })
+      setView('agent-sent')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleVendorSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    try {
+      await fetch('/api/vendor-inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyName: vdCompany, contactName: vdContact, email: vdEmail, phone: vdPhone, association: vdAssoc }),
+      })
+      setView('vendor-sent')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // ── Shared UI pieces ─────────────────────────────────────────────────────────
+
+  const BackBtn = () => (
+    <button
+      onClick={() => setView('home')}
+      className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-orange-600 font-medium mb-6 transition-colors"
+    >
+      {t.back}
+    </button>
+  )
+
+  const AssocSelect = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
+    <div>
+      <label className={labelCls}>{label}</label>
+      <select value={value} onChange={e => onChange(e.target.value)} className={inputCls}>
+        <option value="">{t.selectAssoc}</option>
+        {ASSOCIATIONS.map(a => <option key={a.slug} value={a.name}>{a.name}</option>)}
+      </select>
+    </div>
+  )
+
+  const OrangeBtn = ({ label, disabled }: { label: string; disabled?: boolean }) => (
+    <button
+      type="submit"
+      disabled={disabled}
+      className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-colors"
+    >
+      {label}
+    </button>
+  )
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen flex flex-col bg-gray-100" dir={isRtl ? 'rtl' : 'ltr'}>
 
       {/* ── Header ─────────────────────────────────────────── */}
-      <header className="bg-[#0a2342] text-white shadow-lg">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <header className="bg-black text-white">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
 
-          {/* Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-500 flex items-center justify-center text-white font-bold text-lg select-none">
-              M
-            </div>
-            <div>
-              <div className="text-[10px] font-semibold tracking-[0.18em] text-blue-300 uppercase leading-none mb-0.5">
-                PMI Top Florida Properties
-              </div>
-              <div className="text-xl font-bold tracking-tight leading-none">MAIA</div>
-            </div>
-          </div>
+          {/* Logo */}
+          <a href="/" className="flex-shrink-0">
+            <Image
+              src="/pmi-logo.png"
+              alt="PMI Top Florida Properties"
+              width={160}
+              height={56}
+              className="h-10 w-auto object-contain"
+              priority
+            />
+          </a>
 
           {/* Language tabs */}
           <div className="flex gap-0.5 bg-white/10 rounded-lg p-1">
@@ -243,7 +441,7 @@ export default function Home() {
                 onClick={() => setLang(l.code)}
                 className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
                   lang === l.code
-                    ? 'bg-white text-[#0a2342] shadow-sm'
+                    ? 'bg-orange-500 text-white shadow-sm'
                     : 'text-white/60 hover:text-white hover:bg-white/10'
                 }`}
               >
@@ -255,105 +453,188 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Main ───────────────────────────────────────────── */}
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-10">
+      {/* ── Orange accent bar ───────────────────────────────── */}
+      <div className="h-1 bg-orange-500" />
 
-        {step === 'persona' && (
+      {/* ── Main ───────────────────────────────────────────── */}
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8">
+
+        {/* ── HOME — persona grid ─────────────────────────── */}
+        {view === 'home' && (
           <>
-            {/* Hero */}
-            <div className={`mb-10 ${isRtl ? 'text-right' : 'text-center'}`}>
-              <h1 className="text-3xl sm:text-4xl font-bold text-[#0a2342] mb-2 tracking-tight">
-                {t.welcome}
-              </h1>
-              <p className="text-gray-500 text-lg">{t.subtitle}</p>
+            <div className={`mb-8 ${isRtl ? 'text-right' : 'text-center'}`}>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{t.welcome}</h1>
+              <p className="text-gray-500 text-base">{t.subtitle}</p>
             </div>
 
-            {/* Persona grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {t.personas.map(p => (
                 <button
                   key={p.key}
                   onClick={() => handlePersona(p.key)}
-                  className={`group bg-white border border-gray-200 rounded-2xl p-6 hover:border-blue-400 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${isRtl ? 'text-right' : 'text-left'}`}
+                  className={`group bg-white border border-gray-200 rounded-xl p-5 hover:border-orange-400 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 ${isRtl ? 'text-right' : 'text-left'}`}
                 >
-                  <div className="text-4xl mb-4 leading-none">{p.icon}</div>
-                  <div className="font-semibold text-[#0a2342] text-base mb-1.5 group-hover:text-blue-700 transition-colors">
+                  <div className="text-3xl mb-3 leading-none">{p.icon}</div>
+                  <div className="font-semibold text-gray-900 text-sm mb-1 group-hover:text-orange-600 transition-colors leading-tight">
                     {p.title}
                   </div>
-                  <div className="text-sm text-gray-400 leading-snug">{p.desc}</div>
+                  <div className="text-xs text-gray-400 leading-snug">{p.desc}</div>
                 </button>
               ))}
             </div>
           </>
         )}
 
-        {step === 'association' && (
-          <>
-            {/* Back */}
-            <button
-              onClick={goBack}
-              className="text-blue-600 hover:text-blue-800 font-medium mb-7 inline-flex items-center gap-1.5 transition-colors"
-            >
-              {t.back}
-            </button>
-
-            {/* Title */}
-            <h2 className={`text-2xl sm:text-3xl font-bold text-[#0a2342] mb-5 tracking-tight ${isRtl ? 'text-right' : ''}`}>
-              {t.chooseAssoc}
-            </h2>
-
-            {/* Search */}
-            <div className="relative mb-6">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none">🔍</span>
-              <input
-                type="search"
-                placeholder={t.searchPlaceholder}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                autoFocus
-                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-base bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm"
-                dir="ltr"
-              />
+        {/* ── HOMEOWNER — lookup form ─────────────────────── */}
+        {view === 'homeowner-form' && (
+          <div className="max-w-md mx-auto">
+            <BackBtn />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <h2 className={`text-lg font-bold text-gray-900 mb-1 ${isRtl ? 'text-right' : ''}`}>{t.lookupTitle}</h2>
+              <p className={`text-sm text-gray-500 mb-5 ${isRtl ? 'text-right' : ''}`}>{t.lookupSubtitle}</p>
+              <form onSubmit={handleHomeownerLookup} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>{t.firstName}</label>
+                    <input className={inputCls} value={hwFirst} onChange={e => setHwFirst(e.target.value)} dir="ltr" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>{t.lastName}</label>
+                    <input className={inputCls} value={hwLast} onChange={e => setHwLast(e.target.value)} dir="ltr" />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelCls}>{t.email}</label>
+                  <input type="email" className={inputCls} value={hwEmail} onChange={e => setHwEmail(e.target.value)} dir="ltr" />
+                </div>
+                <div>
+                  <label className={labelCls}>{t.phone}</label>
+                  <input type="tel" className={inputCls} value={hwPhone} onChange={e => setHwPhone(e.target.value)} dir="ltr" />
+                </div>
+                <OrangeBtn label={busy ? t.lookupBusy : t.lookupBtn} disabled={busy} />
+              </form>
             </div>
+          </div>
+        )}
 
-            {/* Association cards */}
-            {filtered.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {filtered.map(a => (
-                  <button
-                    key={a.slug}
-                    onClick={() => router.push(`/${a.slug}`)}
-                    className="bg-white border border-gray-200 rounded-xl px-4 py-5 text-center hover:border-blue-400 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                  >
-                    <div className="text-sm font-semibold text-[#0a2342] leading-tight">{a.name}</div>
-                  </button>
-                ))}
+        {/* ── HOMEOWNER — not found ───────────────────────── */}
+        {view === 'homeowner-notfound' && (
+          <div className="max-w-md mx-auto">
+            <BackBtn />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
+              <div className="text-4xl mb-3">🔍</div>
+              <h2 className="text-lg font-bold text-gray-900 mb-2">{t.notFoundTitle}</h2>
+              <p className="text-sm text-gray-500 mb-4">{t.notFoundBody}</p>
+              <div className="space-y-2">
+                <a href="mailto:PMI@topfloridaproperties.com" className="block text-orange-500 hover:underline font-medium text-sm">
+                  PMI@topfloridaproperties.com
+                </a>
+                <a href="tel:+13059005077" className="block text-orange-500 hover:underline font-medium text-sm">
+                  305.900.5077
+                </a>
               </div>
-            ) : (
-              <div className="text-center text-gray-400 py-16 text-base">{t.noResults}</div>
-            )}
-          </>
+            </div>
+          </div>
+        )}
+
+        {/* ── AGENT — form ─────────────────────────────────── */}
+        {view === 'agent-form' && (
+          <div className="max-w-md mx-auto">
+            <BackBtn />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <h2 className={`text-lg font-bold text-gray-900 mb-1 ${isRtl ? 'text-right' : ''}`}>{t.agentTitle}</h2>
+              <p className={`text-sm text-gray-500 mb-5 ${isRtl ? 'text-right' : ''}`}>{t.agentSubtitle}</p>
+              <form onSubmit={handleAgentSubmit} className="space-y-3">
+                <div>
+                  <label className={labelCls}>{t.agentName} *</label>
+                  <input required className={inputCls} value={agName} onChange={e => setAgName(e.target.value)} dir="ltr" />
+                </div>
+                <div>
+                  <label className={labelCls}>{t.email} *</label>
+                  <input required type="email" className={inputCls} value={agEmail} onChange={e => setAgEmail(e.target.value)} dir="ltr" />
+                </div>
+                <div>
+                  <label className={labelCls}>{t.phone}</label>
+                  <input type="tel" className={inputCls} value={agPhone} onChange={e => setAgPhone(e.target.value)} dir="ltr" />
+                </div>
+                <div>
+                  <label className={labelCls}>{t.agentLicense}</label>
+                  <input className={inputCls} value={agLicense} onChange={e => setAgLicense(e.target.value)} dir="ltr" />
+                </div>
+                <AssocSelect value={agAssoc} onChange={setAgAssoc} label={t.agentAssoc} />
+                <OrangeBtn label={busy ? t.agentBusy : t.agentSendBtn} disabled={busy} />
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ── AGENT — sent ─────────────────────────────────── */}
+        {view === 'agent-sent' && (
+          <div className="max-w-md mx-auto">
+            <BackBtn />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
+              <div className="text-4xl mb-3">✅</div>
+              <h2 className="text-lg font-bold text-gray-900 mb-2">{t.agentSentTitle}</h2>
+              <p className="text-sm text-gray-500">{t.agentSentBody}</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── VENDOR — form ────────────────────────────────── */}
+        {view === 'vendor-form' && (
+          <div className="max-w-md mx-auto">
+            <BackBtn />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <h2 className={`text-lg font-bold text-gray-900 mb-1 ${isRtl ? 'text-right' : ''}`}>{t.vendorTitle}</h2>
+              <p className={`text-sm text-gray-500 mb-5 ${isRtl ? 'text-right' : ''}`}>{t.vendorSubtitle}</p>
+              <form onSubmit={handleVendorSubmit} className="space-y-3">
+                <div>
+                  <label className={labelCls}>{t.company} *</label>
+                  <input required className={inputCls} value={vdCompany} onChange={e => setVdCompany(e.target.value)} dir="ltr" />
+                </div>
+                <div>
+                  <label className={labelCls}>{t.contactName}</label>
+                  <input className={inputCls} value={vdContact} onChange={e => setVdContact(e.target.value)} dir="ltr" />
+                </div>
+                <div>
+                  <label className={labelCls}>{t.email} *</label>
+                  <input required type="email" className={inputCls} value={vdEmail} onChange={e => setVdEmail(e.target.value)} dir="ltr" />
+                </div>
+                <div>
+                  <label className={labelCls}>{t.phone}</label>
+                  <input type="tel" className={inputCls} value={vdPhone} onChange={e => setVdPhone(e.target.value)} dir="ltr" />
+                </div>
+                <AssocSelect value={vdAssoc} onChange={setVdAssoc} label={t.vendorAssoc} />
+                <OrangeBtn label={busy ? t.vendorBusy : t.vendorSendBtn} disabled={busy} />
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ── VENDOR — sent ────────────────────────────────── */}
+        {view === 'vendor-sent' && (
+          <div className="max-w-md mx-auto">
+            <BackBtn />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
+              <div className="text-4xl mb-3">✅</div>
+              <h2 className="text-lg font-bold text-gray-900 mb-2">{t.vendorSentTitle}</h2>
+              <p className="text-sm text-gray-500">{t.vendorSentBody}</p>
+            </div>
+          </div>
         )}
 
       </main>
 
       {/* ── Footer ─────────────────────────────────────────── */}
-      <footer className="bg-white border-t border-gray-100 px-4 py-6">
-        <div className={`max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-gray-400 ${isRtl ? 'sm:flex-row-reverse text-right' : ''}`}>
-          <div className="flex items-center gap-1 flex-wrap justify-center sm:justify-start">
+      <footer className="bg-black text-white/50 px-4 py-5">
+        <div className={`max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs ${isRtl ? 'sm:flex-row-reverse' : ''}`}>
+          <div className="flex items-center gap-2 flex-wrap justify-center">
             <span>{t.contact}</span>
-            <a
-              href="mailto:PMI@topfloridaproperties.com"
-              className="text-blue-600 hover:underline font-medium"
-            >
-              PMI@topfloridaproperties.com
-            </a>
-            <span className="text-gray-300">·</span>
-            <a href="tel:+13059005077" className="text-blue-600 hover:underline font-medium">
-              305.900.5077
-            </a>
+            <a href="mailto:PMI@topfloridaproperties.com" className="text-orange-400 hover:text-orange-300 hover:underline">PMI@topfloridaproperties.com</a>
+            <span className="text-white/20">·</span>
+            <a href="tel:+13059005077" className="text-orange-400 hover:text-orange-300 hover:underline">305.900.5077</a>
           </div>
-          <div className="text-gray-300 text-xs">© 2026 PMI Top Florida Properties</div>
+          <div className="text-white/30">© 2026 PMI Top Florida Properties</div>
         </div>
       </footer>
 
