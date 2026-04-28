@@ -153,11 +153,15 @@ export async function GET(req: NextRequest) {
 // ============================================================
 
 export async function POST(req: NextRequest) {
-  const body = await req.formData()
+  let body: FormData
+  try { body = await req.formData() } catch {
+    return new NextResponse('Bad Request', { status: 400 })
+  }
 
-  const from:    string = (body.get('From') as string) ?? ''
-  const msgBody: string = (body.get('Body') as string) ?? ''
-  const callStatus      = body.get('CallStatus') as string | null
+  const from:         string  = (body.get('From') as string) ?? ''
+  const msgBody:      string  = (body.get('Body') as string) ?? ''
+  const callStatus            = body.get('CallStatus') as string | null
+  const speechResult          = body.get('SpeechResult') as string | null
 
   const channel: Channel = from.startsWith('whatsapp:')
     ? 'whatsapp'
@@ -166,31 +170,86 @@ export async function POST(req: NextRequest) {
     : 'sms'
 
   const cleanPhone = from.replace('whatsapp:', '').trim()
-  console.log(`[WEBHOOK] ${channel.toUpperCase()} | ${cleanPhone} | "${msgBody}"`)
+  console.log(`[WEBHOOK] ${channel.toUpperCase()} | ${cleanPhone} | "${speechResult ?? msgBody ?? callStatus}"`)
 
-  if (channel === 'voice') return handleVoice(cleanPhone, body)
-  return handleTextChannel(cleanPhone, msgBody, channel)
+  try {
+    if (channel === 'voice') {
+      if (speechResult) return await handleVoiceInput(cleanPhone, speechResult)
+      return await handleVoice(cleanPhone, body)
+    }
+    return await handleTextChannel(cleanPhone, msgBody, channel)
+  } catch (err) {
+    console.error('[WEBHOOK] Unhandled error:', err)
+    if (channel === 'voice') {
+      const twiml = `<?xml version="1.0" encoding="UTF-8"?><Response><Say voice="Polly.Joanna">I'm sorry, I'm having a technical issue. Please call our office at 3 0 5 9 0 0 5 0 7 7. Thank you.</Say></Response>`
+      return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } })
+    }
+    // SMS/WhatsApp: try to send a fallback message, then return 200 so Twilio doesn't retry
+    try {
+      const fallbackFrom = channel === 'whatsapp'
+        ? `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`
+        : process.env.TWILIO_PHONE_NUMBER!
+      const fallbackTo = channel === 'whatsapp' ? `whatsapp:${cleanPhone}` : cleanPhone
+      await twilioClient.messages.create({
+        from: fallbackFrom, to: fallbackTo,
+        body: `I'm having a technical issue right now. Please call (305) 900-5077 or WhatsApp (786) 686-3223 and our team will help you. — Maia 🌸`,
+      })
+    } catch { /* best-effort — don't cascade */ }
+    return NextResponse.json({ status: 'error_handled' })
+  }
 }
 
 // ============================================================
 // VOICE HANDLER
 // ============================================================
 
+const VOICE_COMPLETED = new Set(['completed', 'busy', 'failed', 'no-answer', 'canceled'])
+
 async function handleVoice(phone: string, body: FormData): Promise<NextResponse> {
-  const callStatus = body.get('CallStatus') as string
-  if (callStatus === 'ringing' || callStatus === 'in-progress') {
-    const ctx      = await buildCallerContext(phone, 'voice')
-    const greeting = await getVoiceGreeting(ctx)
-    const twiml    = `<?xml version="1.0" encoding="UTF-8"?>
+  const callStatus = (body.get('CallStatus') as string) ?? ''
+  if (VOICE_COMPLETED.has(callStatus)) return new NextResponse('OK')
+
+  const ctx      = await buildCallerContext(phone, 'voice')
+  const greeting = await getVoiceGreeting(ctx)
+  const voice    = getVoiceForLanguage(ctx.language)
+  const twiml    = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="Google.${getVoiceForLanguage(ctx.language)}">${greeting}</Say>
-  <Gather input="speech" speechTimeout="3" action="/api/webhook/voice-input" method="POST">
-    <Say voice="Google.${getVoiceForLanguage(ctx.language)}">${getListenPrompt(ctx.language)}</Say>
+  <Say voice="${voice}">${escapeXml(greeting)}</Say>
+  <Gather input="speech" speechTimeout="4" action="/api/webhook" method="POST">
+    <Say voice="${voice}">${escapeXml(getListenPrompt(ctx.language))}</Say>
   </Gather>
+  <Say voice="${voice}">I did not catch that. Please call our office at 3 0 5, 9 0 0, 5 0 7 7. Thank you for calling PMI Top Florida Properties!</Say>
+  <Hangup/>
 </Response>`
-    return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } })
+  return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } })
+}
+
+async function handleVoiceInput(phone: string, speechText: string): Promise<NextResponse> {
+  const ctx   = await buildCallerContext(phone, 'voice')
+  const voice = getVoiceForLanguage(ctx.language)
+
+  let responseText: string
+  try {
+    responseText = await getMaiaIntelligentResponse(ctx, speechText)
+  } catch {
+    responseText = 'I had trouble with that request. Please call our office at (305) 900-5077 and our team will assist you.'
   }
-  return new NextResponse('OK')
+
+  // Strip emoji and markdown for TTS, keep under 300 chars
+  const spoken = responseText.replace(/[\u{1F300}-\u{1FFFF}]/gu, '').replace(/[*_]/g, '').trim().slice(0, 400)
+
+  const farewell = ({ en:'Is there anything else I can help you with?', es:'¿Hay algo más en que pueda ayudarte?', pt:'Posso ajudar em mais alguma coisa?', fr:'Puis-je vous aider avec autre chose?', he:'האם יש עוד שאוכל לעזור לך?', ru:'Чем ещё я могу помочь?' } as Record<string,string>)[ctx.language] ?? 'Is there anything else I can help you with?'
+
+  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="${voice}">${escapeXml(spoken)}</Say>
+  <Gather input="speech" speechTimeout="4" action="/api/webhook" method="POST">
+    <Say voice="${voice}">${escapeXml(farewell)}</Say>
+  </Gather>
+  <Say voice="${voice}">Thank you for calling PMI Top Florida Properties. Have a wonderful day!</Say>
+  <Hangup/>
+</Response>`
+  return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } })
 }
 
 // ============================================================
@@ -830,13 +889,19 @@ MAIL: P.O. Box 163556, Miami FL 33116
 
 Always end with a warm offer to help with anything else. 🌸`
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY!, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 500, system, messages: [{ role: 'user', content: message }] }),
-  })
-  const d = await res.json()
-  return d.content?.[0]?.text ?? translate(ctx.language, {
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY!, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 500, system, messages: [{ role: 'user', content: message }] }),
+    })
+    const d = await res.json()
+    const text = d.content?.[0]?.text
+    if (text) return text
+  } catch (err) {
+    console.error('[MAIA AI]', err)
+  }
+  return translate(ctx.language, {
     en: `I'd love to help! Let me connect you with our team. Reply 8 or email support@topfloridaproperties.com 🌸`,
     es: `¡Me encantaría ayudarte! Responde 8 o escribe a support@topfloridaproperties.com 🌸`,
     pt: `Adoraria te ajudar! Responda 8 ou escreva para support@topfloridaproperties.com 🌸`,
@@ -904,11 +969,11 @@ async function handleAccountInfo(ctx: CallerContext): Promise<string> {
 
 const AGENT_MSG = {
   identify: (lang: string, name: string) => ({ en:`👋 Hello ${name}! Agent Portal.\n\n1 - 🏠 Owner / Seller\n2 - 🔑 Buyer\n3 - 📋 Tenant / Renter`, es:`👋 ¡Hola ${name}! Portal de Agentes.\n\n1-🏠 Propietario  2-🔑 Comprador  3-📋 Inquilino`, pt:`👋 Olá ${name}! Portal de Corretores.\n\n1-🏠 Proprietário  2-🔑 Comprador  3-📋 Inquilino`, fr:`👋 Bonjour ${name}!\n1-🏠 Propriétaire  2-🔑 Acheteur  3-📋 Locataire`, he:`👋 שלום ${name}!\n1-🏠 בעלים  2-🔑 קונה  3-📋 שוכר`, ru:`👋 Привет ${name}!\n1-🏠 Владелец  2-🔑 Покупатель  3-📋 Арендатор` } as Record<string,string>)[lang] ?? 'Reply 1, 2, or 3.',
-  ownerSelected: (lang: string) => ({ en:`🏠 Owner/Seller — upload signed listing agreement at:\n${process.env.NEXT_PUBLIC_URL}/agents/upload\n\nOr reply with the property address.`, es:`🏠 Sube el acuerdo de listado firmado:\n${process.env.NEXT_PUBLIC_URL}/agents/upload`, pt:`🏠 Envie o contrato de listagem assinado:\n${process.env.NEXT_PUBLIC_URL}/agents/upload`, fr:`🏠 ${process.env.NEXT_PUBLIC_URL}/agents/upload`, he:`🏠 ${process.env.NEXT_PUBLIC_URL}/agents/upload`, ru:`🏠 ${process.env.NEXT_PUBLIC_URL}/agents/upload` } as Record<string,string>)[lang] ?? `Upload at ${process.env.NEXT_PUBLIC_URL}/agents/upload`,
-  buyerSelected: (lang: string) => ({ en:`🔑 Buyer — provide buyer's name, unit of interest, and what you need.\n\nOr: ${process.env.NEXT_PUBLIC_URL}/agents/upload`, es:`🔑 Proporciona nombre, unidad y qué necesitas.\n${process.env.NEXT_PUBLIC_URL}/agents/upload`, pt:`🔑 Informe nome, unidade e o que precisa.\n${process.env.NEXT_PUBLIC_URL}/agents/upload`, fr:`🔑 ${process.env.NEXT_PUBLIC_URL}/agents/upload`, he:`🔑 ${process.env.NEXT_PUBLIC_URL}/agents/upload`, ru:`🔑 ${process.env.NEXT_PUBLIC_URL}/agents/upload` } as Record<string,string>)[lang] ?? `${process.env.NEXT_PUBLIC_URL}/agents/upload`,
-  tenantSelected: (lang: string) => ({ en:`📋 Tenant — provide tenant's name, unit of interest, and what you need.\n\nOr: ${process.env.NEXT_PUBLIC_URL}/agents/upload`, es:`📋 Proporciona nombre, unidad y qué necesitas.\n${process.env.NEXT_PUBLIC_URL}/agents/upload`, pt:`📋 Informe nome, unidade e o que precisa.\n${process.env.NEXT_PUBLIC_URL}/agents/upload`, fr:`📋 ${process.env.NEXT_PUBLIC_URL}/agents/upload`, he:`📋 ${process.env.NEXT_PUBLIC_URL}/agents/upload`, ru:`📋 ${process.env.NEXT_PUBLIC_URL}/agents/upload` } as Record<string,string>)[lang] ?? `${process.env.NEXT_PUBLIC_URL}/agents/upload`,
-  notRegistered: (lang: string) => ({ en:`👤 You're not registered as an agent yet.\n\nRegister: ${process.env.NEXT_PUBLIC_URL}/agents/register\n\nOr reply with your full name, license #, and brokerage.`, es:`👤 No estás registrado. Regístrate: ${process.env.NEXT_PUBLIC_URL}/agents/register`, pt:`👤 Não cadastrado. Cadastre-se: ${process.env.NEXT_PUBLIC_URL}/agents/register`, fr:`👤 ${process.env.NEXT_PUBLIC_URL}/agents/register`, he:`👤 ${process.env.NEXT_PUBLIC_URL}/agents/register`, ru:`👤 ${process.env.NEXT_PUBLIC_URL}/agents/register` } as Record<string,string>)[lang] ?? `Register at ${process.env.NEXT_PUBLIC_URL}/agents/register`,
-  uploadReminder: (lang: string, name: string) => ({ en:`📎 Hi ${name} — still waiting for your listing agreement.\n\n${process.env.NEXT_PUBLIC_URL}/agents/upload`, es:`📎 Hola ${name} — aún esperamos el acuerdo.\n${process.env.NEXT_PUBLIC_URL}/agents/upload`, pt:`📎 Olá ${name} — ainda aguardamos o contrato.\n${process.env.NEXT_PUBLIC_URL}/agents/upload`, fr:`📎 ${process.env.NEXT_PUBLIC_URL}/agents/upload`, he:`📎 ${process.env.NEXT_PUBLIC_URL}/agents/upload`, ru:`📎 ${process.env.NEXT_PUBLIC_URL}/agents/upload` } as Record<string,string>)[lang] ?? `${process.env.NEXT_PUBLIC_URL}/agents/upload`,
+  ownerSelected: (lang: string) => ({ en:`🏠 Owner/Seller — upload signed listing agreement at:\n${process.env.NEXT_PUBLIC_APP_URL}/agents/upload\n\nOr reply with the property address.`, es:`🏠 Sube el acuerdo de listado firmado:\n${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, pt:`🏠 Envie o contrato de listagem assinado:\n${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, fr:`🏠 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, he:`🏠 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, ru:`🏠 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload` } as Record<string,string>)[lang] ?? `Upload at ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`,
+  buyerSelected: (lang: string) => ({ en:`🔑 Buyer — provide buyer's name, unit of interest, and what you need.\n\nOr: ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, es:`🔑 Proporciona nombre, unidad y qué necesitas.\n${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, pt:`🔑 Informe nome, unidade e o que precisa.\n${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, fr:`🔑 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, he:`🔑 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, ru:`🔑 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload` } as Record<string,string>)[lang] ?? `${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`,
+  tenantSelected: (lang: string) => ({ en:`📋 Tenant — provide tenant's name, unit of interest, and what you need.\n\nOr: ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, es:`📋 Proporciona nombre, unidad y qué necesitas.\n${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, pt:`📋 Informe nome, unidade e o que precisa.\n${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, fr:`📋 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, he:`📋 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, ru:`📋 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload` } as Record<string,string>)[lang] ?? `${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`,
+  notRegistered: (lang: string) => ({ en:`👤 You're not registered as an agent yet.\n\nRegister: ${process.env.NEXT_PUBLIC_APP_URL}/agents/register\n\nOr reply with your full name, license #, and brokerage.`, es:`👤 No estás registrado. Regístrate: ${process.env.NEXT_PUBLIC_APP_URL}/agents/register`, pt:`👤 Não cadastrado. Cadastre-se: ${process.env.NEXT_PUBLIC_APP_URL}/agents/register`, fr:`👤 ${process.env.NEXT_PUBLIC_APP_URL}/agents/register`, he:`👤 ${process.env.NEXT_PUBLIC_APP_URL}/agents/register`, ru:`👤 ${process.env.NEXT_PUBLIC_APP_URL}/agents/register` } as Record<string,string>)[lang] ?? `Register at ${process.env.NEXT_PUBLIC_APP_URL}/agents/register`,
+  uploadReminder: (lang: string, name: string) => ({ en:`📎 Hi ${name} — still waiting for your listing agreement.\n\n${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, es:`📎 Hola ${name} — aún esperamos el acuerdo.\n${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, pt:`📎 Olá ${name} — ainda aguardamos o contrato.\n${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, fr:`📎 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, he:`📎 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`, ru:`📎 ${process.env.NEXT_PUBLIC_APP_URL}/agents/upload` } as Record<string,string>)[lang] ?? `${process.env.NEXT_PUBLIC_APP_URL}/agents/upload`,
   requestLogged: (lang: string, reqId: string) => ({ en:`✅ Request logged! Ref: ${reqId.slice(0,8)}\n\nOur team will send forms within 1 business day.`, es:`✅ ¡Solicitud registrada! Ref: ${reqId.slice(0,8)}`, pt:`✅ Solicitação registrada! Ref: ${reqId.slice(0,8)}`, fr:`✅ Ref: ${reqId.slice(0,8)}`, he:`✅ ${reqId.slice(0,8)}`, ru:`✅ ${reqId.slice(0,8)}` } as Record<string,string>)[lang] ?? `✅ Request logged.`,
   agreementReceived: (lang: string) => ({ en:`✅ Listing agreement received and under review. We'll confirm within 1 business day.`, es:`✅ Acuerdo de listado recibido y en revisión.`, pt:`✅ Contrato de listagem recebido e em análise.`, fr:`✅ Contrat reçu.`, he:`✅ הסכם התקבל.`, ru:`✅ Соглашение получено.` } as Record<string,string>)[lang] ?? `✅ Agreement received.`,
 }
@@ -984,7 +1049,7 @@ async function getAgentId(phone: string): Promise<string | null> {
 async function notifyAgentTeam(ctx: CallerContext, repType: string, reqId: string): Promise<void> {
   const labels: Record<string,string> = { owner:'Owner / Listing Agent', buyer:'Buyer Agent', tenant:'Tenant Agent' }
   await notifyTeamByEmail(process.env.LEASING_EMAIL!, `🏡 Agent Request — ${labels[repType]} — ${ctx.name}`,
-    `Agent: ${ctx.name}\nPhone: ${ctx.phone}\nRepresenting: ${labels[repType]}\nRequest ID: ${reqId}\n\nView: ${process.env.NEXT_PUBLIC_URL}/admin/agents/${reqId}`)
+    `Agent: ${ctx.name}\nPhone: ${ctx.phone}\nRepresenting: ${labels[repType]}\nRequest ID: ${reqId}\n\nView: ${process.env.NEXT_PUBLIC_APP_URL}/admin/agents/${reqId}`)
 }
 
 ;(FEEDBACK_CONFIG as Record<string,{type:FeedbackType}>)['agent_identification'] = { type: 'stars' }
@@ -1095,7 +1160,7 @@ async function alertEmergencyTeam(ctx: CallerContext) {
 }
 
 async function notifyTeamByEmail(to: string, subject: string, body: string) {
-  await fetch(`${process.env.NEXT_PUBLIC_URL}/api/send-email`, {
+  await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/send-email`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ to, subject, body }),
   }).catch(err => console.error('[EMAIL]', err))
@@ -1133,8 +1198,20 @@ function getListenPrompt(lang: string): string {
   return ({ en:'Please describe how I can help you.', es:'Por favor describa cómo puedo ayudarle.', pt:'Por favor descreva como posso ajudar.', fr:'Veuillez décrire comment je peux vous aider.', he:'אנא תאר כיצד אוכל לעזור לך.', ru:'Пожалуйста, опишите, как я могу вам помочь.' } as Record<string,string>)[lang] ?? 'How can I help?'
 }
 
+// Amazon Polly voices — available on all Twilio accounts, no add-on required
 function getVoiceForLanguage(lang: string): string {
-  return ({ en:'en-US-Neural2-F', es:'es-US-Neural2-A', pt:'pt-BR-Neural2-A', fr:'fr-FR-Neural2-A', he:'he-IL-Wavenet-A', ru:'ru-RU-Neural2-A' } as Record<string,string>)[lang] ?? 'en-US-Neural2-F'
+  return ({
+    en: 'Polly.Joanna',
+    es: 'Polly.Lupe',
+    pt: 'Polly.Camila',
+    fr: 'Polly.Celine',
+    he: 'Polly.Joanna',  // Hebrew unavailable in Polly; fallback to English
+    ru: 'Polly.Tatyana',
+  } as Record<string, string>)[lang] ?? 'Polly.Joanna'
+}
+
+function escapeXml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
 }
 
 // ============================================================
