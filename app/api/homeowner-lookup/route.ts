@@ -5,6 +5,7 @@ export type MatchedRole =
   | { type: 'staff' }
   | { type: 'owner';  owner_id: number;       association_code: string; association_name: string }
   | { type: 'board';  board_member_id: string; association_code: string; association_name: string; position: string | null }
+  | { type: 'tenant'; association_code: string; association_name: string }
 
 export async function POST(req: NextRequest) {
   const { firstName, lastName, email, phone } = await req.json()

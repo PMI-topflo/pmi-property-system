@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import AddressSearch from '@/components/AddressSearch'
+import TwoFactorAuth from '@/components/TwoFactorAuth'
 import type { AddressResult } from '@/app/api/address-search/route'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -11,12 +12,15 @@ import type { AddressResult } from '@/app/api/address-search/route'
 type Lang = 'en' | 'es' | 'pt' | 'fr' | 'he' | 'ru'
 type View =
   | 'home' | 'homeowner-form' | 'homeowner-notfound' | 'role-selector'
+  | 'hw-step2' | 'hw-step3' | 'hw-escalate' | 'hw-escalate-form' | 'hw-escalate-sent'
+  | 'hw-chat' | 'hw-chat-sent' | 'hw-2fa'
   | 'agent-form' | 'agent-sent' | 'vendor-form' | 'vendor-sent'
 
 type MatchedRole =
   | { type: 'staff' }
   | { type: 'owner';  owner_id: number; association_code: string; association_name: string }
   | { type: 'board';  board_member_id: string; association_code: string; association_name: string; position: string | null }
+  | { type: 'tenant'; association_code: string; association_name: string }
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -240,6 +244,112 @@ const COPY: Record<Lang, T> = {
   },
 }
 
+// ── Multi-step identification messages (all 6 languages) ─────────────────────
+
+interface IdMsgs {
+  step2: string; step3: string; step4: string; chatWelcome: string
+  step2Addr: string; step2Btn: string; step2Busy: string
+  step3Assoc: string; step3Unit: string; step3Btn: string; step3Busy: string
+  optATitle: string; optADesc: string; optBTitle: string; optBDesc: string
+  escTitle: string; escUnit: string; escHowHear: string; escNeedHelp: string
+  escSendBtn: string; escBusy: string; escSentTitle: string; escSentBody: string
+  chatPlaceholder: string; chatSend: string; chatEndBtn: string
+  chatSentTitle: string; chatSentBody: string
+}
+
+const ID_MSGS: Record<Lang, IdMsgs> = {
+  en: {
+    step2: "I wasn't able to find your account with that information. Let me try another way — can you tell me your property address and unit number?",
+    step3: "Let me try one more thing. Do you know the name of your association or community?",
+    step4: "I'm sorry, I wasn't able to locate your account. I don't want to leave you without help — I have two options for you:",
+    chatWelcome: "I'm here to help! Tell me what you need and I'll make sure our team follows up with you personally.",
+    step2Addr: 'Property Address & Unit', step2Btn: 'Search by Address', step2Busy: 'Searching…',
+    step3Assoc: 'Association / Community Name', step3Unit: 'Unit Number (optional)', step3Btn: 'Search by Association', step3Busy: 'Searching…',
+    optATitle: 'Fill a Quick Form', optADesc: 'Share your details and our team will get back to you within 1 business day.',
+    optBTitle: 'Chat with MAIA', optBDesc: "Continue this conversation and I'll make sure our team follows up.",
+    escTitle: 'Help Us Find You', escUnit: 'Unit Number', escHowHear: 'How did you hear about us?', escNeedHelp: 'What do you need help with?',
+    escSendBtn: 'Send My Info', escBusy: 'Sending…',
+    escSentTitle: 'Thank you', escSentBody: 'Paola from our customer service team will review your information and get back to you within 1 business day.',
+    chatPlaceholder: 'Type your message…', chatSend: 'Send', chatEndBtn: 'End Chat & Get Follow-up',
+    chatSentTitle: 'All set!', chatSentBody: "I've sent a summary of our conversation to our team. Paola will follow up within 1 business day.",
+  },
+  es: {
+    step2: "No pude encontrar tu cuenta con esa información. Déjame intentarlo de otra manera — ¿puedes decirme tu dirección y número de unidad?",
+    step3: "Déjame probar algo más. ¿Sabes el nombre de tu asociación o comunidad?",
+    step4: "Lo siento, no pude localizar tu cuenta. ¡No quiero dejarte sin ayuda! Tengo dos opciones para ti:",
+    chatWelcome: "¡Estoy aquí para ayudar! Cuéntame qué necesitas y me aseguraré de que el equipo te contacte.",
+    step2Addr: 'Dirección y Número de Unidad', step2Btn: 'Buscar por Dirección', step2Busy: 'Buscando…',
+    step3Assoc: 'Asociación / Comunidad', step3Unit: 'Número de Unidad (opcional)', step3Btn: 'Buscar por Asociación', step3Busy: 'Buscando…',
+    optATitle: 'Completa un Formulario', optADesc: 'Comparte tus datos y nuestro equipo te contactará en 1 día hábil.',
+    optBTitle: 'Chatear con MAIA', optBDesc: "Continúa la conversación y me aseguraré de que el equipo te haga seguimiento.",
+    escTitle: 'Ayúdanos a Encontrarte', escUnit: 'Número de Unidad', escHowHear: '¿Cómo nos conociste?', escNeedHelp: '¿En qué necesitas ayuda?',
+    escSendBtn: 'Enviar Mi Información', escBusy: 'Enviando…',
+    escSentTitle: 'Gracias', escSentBody: 'Paola de nuestro equipo de servicio al cliente revisará tu información y te contactará en 1 día hábil.',
+    chatPlaceholder: 'Escribe tu mensaje…', chatSend: 'Enviar', chatEndBtn: 'Terminar Chat y Obtener Seguimiento',
+    chatSentTitle: '¡Listo!', chatSentBody: "He enviado un resumen de nuestra conversación. Paola hará seguimiento en 1 día hábil.",
+  },
+  pt: {
+    step2: "Não consegui encontrar sua conta com essas informações. Vou tentar de outra forma — pode me dizer seu endereço e número da unidade?",
+    step3: "Deixa eu tentar mais uma coisa. Você sabe o nome da sua associação ou condomínio?",
+    step4: "Lamento, não consegui localizar sua conta. Não quero te deixar sem ajuda — tenho duas opções:",
+    chatWelcome: "Estou aqui para ajudar! Me diga o que precisa e garantirei que nossa equipe entre em contato.",
+    step2Addr: 'Endereço e Número da Unidade', step2Btn: 'Buscar por Endereço', step2Busy: 'Buscando…',
+    step3Assoc: 'Associação / Condomínio', step3Unit: 'Número da Unidade (opcional)', step3Btn: 'Buscar por Associação', step3Busy: 'Buscando…',
+    optATitle: 'Preencher um Formulário', optADesc: 'Compartilhe seus dados e nossa equipe retornará em 1 dia útil.',
+    optBTitle: 'Conversar com MAIA', optBDesc: "Continue a conversa e garantirei que nossa equipe faça o acompanhamento.",
+    escTitle: 'Nos Ajude a Encontrar Você', escUnit: 'Número da Unidade', escHowHear: 'Como nos conheceu?', escNeedHelp: 'Com o que você precisa de ajuda?',
+    escSendBtn: 'Enviar Meus Dados', escBusy: 'Enviando…',
+    escSentTitle: 'Obrigado', escSentBody: 'Paola da nossa equipe de atendimento revisará suas informações e entrará em contato em 1 dia útil.',
+    chatPlaceholder: 'Digite sua mensagem…', chatSend: 'Enviar', chatEndBtn: 'Encerrar e Obter Acompanhamento',
+    chatSentTitle: 'Tudo certo!', chatSentBody: "Enviei um resumo da conversa para nossa equipe. Paola entrará em contato em 1 dia útil.",
+  },
+  fr: {
+    step2: "Je n'ai pas pu trouver votre compte. Essayons autrement — pouvez-vous me donner votre adresse et numéro d'unité ?",
+    step3: "Laissez-moi essayer encore une chose. Connaissez-vous le nom de votre association ou résidence ?",
+    step4: "Je suis désolée, je n'ai pas pu localiser votre compte. Je ne veux pas vous laisser sans aide — voici deux options :",
+    chatWelcome: "Je suis là pour vous aider ! Dites-moi ce dont vous avez besoin et je m'assurerai que notre équipe vous contacte.",
+    step2Addr: "Adresse et Numéro d'Unité", step2Btn: 'Rechercher par Adresse', step2Busy: 'Recherche…',
+    step3Assoc: 'Association / Résidence', step3Unit: "Numéro d'Unité (optionnel)", step3Btn: 'Rechercher par Association', step3Busy: 'Recherche…',
+    optATitle: 'Remplir un Formulaire', optADesc: 'Partagez vos coordonnées et notre équipe vous recontactera en 1 jour ouvrable.',
+    optBTitle: 'Chatter avec MAIA', optBDesc: "Continuez la conversation et je m'assurerai que notre équipe vous suit.",
+    escTitle: 'Aidez-nous à Vous Trouver', escUnit: "Numéro d'Unité", escHowHear: 'Comment nous avez-vous connus ?', escNeedHelp: "En quoi avez-vous besoin d'aide ?",
+    escSendBtn: 'Envoyer Mes Informations', escBusy: 'Envoi…',
+    escSentTitle: 'Merci', escSentBody: 'Paola de notre équipe service client examinera vos informations et vous recontactera sous 1 jour ouvrable.',
+    chatPlaceholder: 'Tapez votre message…', chatSend: 'Envoyer', chatEndBtn: 'Terminer et Obtenir un Suivi',
+    chatSentTitle: "C'est noté !", chatSentBody: "J'ai envoyé un résumé à notre équipe. Paola vous recontactera sous 1 jour ouvrable.",
+  },
+  he: {
+    step2: 'לא הצלחתי למצוא את חשבונך. בוא ננסה דרך אחרת — האם תוכל לספר לי את כתובת הנכס ומספר היחידה?',
+    step3: 'תן לי לנסות עוד דבר. האם אתה יודע את שם העמותה או הקהילה שלך?',
+    step4: 'אני מצטערת, לא הצלחתי לאתר את חשבונך. אני לא רוצה להשאיר אותך ללא עזרה — יש לי שתי אפשרויות:',
+    chatWelcome: 'אני כאן לעזור! ספר לי מה אתה צריך ואוודא שהצוות שלנו יצור קשר איתך.',
+    step2Addr: 'כתובת ומספר יחידה', step2Btn: 'חפש לפי כתובת', step2Busy: 'מחפש…',
+    step3Assoc: 'שם עמותה / קהילה', step3Unit: 'מספר יחידה (אופציונלי)', step3Btn: 'חפש לפי עמותה', step3Busy: 'מחפש…',
+    optATitle: 'מלא טופס קצר', optADesc: 'שתף את הפרטים שלך והצוות שלנו יחזור אליך תוך יום עסקים.',
+    optBTitle: 'שוחח עם MAIA', optBDesc: 'המשך את השיחה ואוודא שהצוות שלנו יצור קשר.',
+    escTitle: 'עזור לנו למצוא אותך', escUnit: 'מספר יחידה', escHowHear: 'כיצד שמעת עלינו?', escNeedHelp: 'במה אתה צריך עזרה?',
+    escSendBtn: 'שלח את הפרטים שלי', escBusy: 'שולח…',
+    escSentTitle: 'תודה', escSentBody: 'פאולה מצוות שירות הלקוחות תסקור את המידע שלך ותחזור אליך תוך יום עסקים.',
+    chatPlaceholder: 'הקלד את הודעתך…', chatSend: 'שלח', chatEndBtn: "סיים צ'אט וקבל מעקב",
+    chatSentTitle: 'הכל מסודר!', chatSentBody: 'שלחתי סיכום השיחה שלנו לצוות. פאולה תעשה מעקב תוך יום עסקים.',
+  },
+  ru: {
+    step2: 'Мне не удалось найти аккаунт по этим данным. Давайте попробуем иначе — можете сообщить адрес объекта и номер квартиры?',
+    step3: 'Позвольте попробовать ещё кое-что. Вы знаете название своего ТСЖ или жилого комплекса?',
+    step4: 'Сожалею, аккаунт найти не удалось. Я не хочу оставлять вас без помощи — у меня есть два варианта:',
+    chatWelcome: 'Я здесь, чтобы помочь! Расскажите, что нужно, и я прослежу, чтобы наша команда с вами связалась.',
+    step2Addr: 'Адрес и Номер Квартиры', step2Btn: 'Поиск по Адресу', step2Busy: 'Поиск…',
+    step3Assoc: 'ТСЖ / Жилой Комплекс', step3Unit: 'Номер Квартиры (необязательно)', step3Btn: 'Поиск по ТСЖ', step3Busy: 'Поиск…',
+    optATitle: 'Заполнить Форму', optADesc: 'Поделитесь данными, и наша команда свяжется в течение 1 рабочего дня.',
+    optBTitle: 'Чат с MAIA', optBDesc: 'Продолжите разговор, и я прослежу, чтобы команда с вами связалась.',
+    escTitle: 'Помогите Нам Вас Найти', escUnit: 'Номер Квартиры', escHowHear: 'Откуда вы о нас узнали?', escNeedHelp: 'Чем мы можем помочь?',
+    escSendBtn: 'Отправить Данные', escBusy: 'Отправка…',
+    escSentTitle: 'Спасибо', escSentBody: 'Паола из нашей команды рассмотрит информацию и свяжется в течение 1 рабочего дня.',
+    chatPlaceholder: 'Введите сообщение…', chatSend: 'Отправить', chatEndBtn: 'Завершить Чат и Получить Ответ',
+    chatSentTitle: 'Готово!', chatSentBody: 'Я отправила сводку нашего разговора команде. Паола свяжется в течение 1 рабочего дня.',
+  },
+}
+
 // ── Shared input/label styles ─────────────────────────────────────────────────
 
 const inputCls = 'w-full px-3 py-2.5 border border-[#333] rounded-[2px] text-sm focus:outline-none focus:border-[#f26a1b] focus:shadow-[0_0_0_3px_rgba(242,106,27,.18)] bg-[#1a1a1a] text-white placeholder:text-[#555] transition-shadow'
@@ -294,6 +404,25 @@ export default function Home() {
   const [hwPhone,   setHwPhone]   = useState('')
   const [hwAddress, setHwAddress] = useState('')
   const [hwNudge,   setHwNudge]   = useState(false)
+
+  // Multi-step identification
+  const [hwStep2Addr,   setHwStep2Addr]   = useState('')
+  const [hwStep3Assoc,  setHwStep3Assoc]  = useState('')
+  const [hwStep3Unit,   setHwStep3Unit]   = useState('')
+  const [escalFirst,    setEscalFirst]    = useState('')
+  const [escalLast,     setEscalLast]     = useState('')
+  const [escalEmail,    setEscalEmail]    = useState('')
+  const [escalPhone,    setEscalPhone]    = useState('')
+  const [escalAddr,     setEscalAddr]     = useState('')
+  const [escalUnit,     setEscalUnit]     = useState('')
+  const [escalAssoc,    setEscalAssoc]    = useState('')
+  const [escalHowHear,  setEscalHowHear]  = useState('')
+  const [escalNeedHelp, setEscalNeedHelp] = useState('')
+  const [escalRef,      setEscalRef]      = useState('')
+  const [chatMessages,  setChatMessages]  = useState<Array<{role:'user'|'assistant';content:string}>>([])
+  const [chatInput,     setChatInput]     = useState('')
+  const [chatBusy,      setChatBusy]      = useState(false)
+  const [pending2FA,    setPending2FA]    = useState<MatchedRole | null>(null)
 
   // Agent form
   const [agName,    setAgName]    = useState('')
@@ -364,11 +493,17 @@ export default function Home() {
     if (key === 'staff')     { setView('homeowner-form'); return }
   }
 
-  function routeToRole(role: MatchedRole) {
+  function navigateToPortal(role: MatchedRole) {
     try { sessionStorage.setItem('maia_persona', JSON.stringify(role)) } catch { /* ignore */ }
-    if (role.type === 'staff') { router.push('/admin'); return }
-    if (role.type === 'owner') { router.push(`/my-account?id=${role.owner_id}&assoc=${role.association_code}`); return }
-    if (role.type === 'board') { router.push(`/board?id=${role.board_member_id}&assoc=${role.association_code}`); return }
+    if (role.type === 'staff')  { router.push('/admin'); return }
+    if (role.type === 'owner')  { router.push(`/my-account?id=${role.owner_id}&assoc=${role.association_code}`); return }
+    if (role.type === 'board')  { router.push(`/board?id=${role.board_member_id}&assoc=${role.association_code}`); return }
+    if (role.type === 'tenant') { router.push(`/my-account?assoc=${role.association_code}`); return }
+  }
+
+  function routeToRole(role: MatchedRole) {
+    setPending2FA(role)
+    setView('hw-2fa')
   }
 
   async function handleHomeownerLookup(e: React.FormEvent) {
@@ -384,7 +519,7 @@ export default function Home() {
         body: JSON.stringify({ firstName: hwFirst, lastName: hwLast, email: hwEmail, phone: hwPhone }),
       })
       const data = await res.json()
-      if (!data.found || !data.roles?.length) { setView('homeowner-notfound'); return }
+      if (!data.found || !data.roles?.length) { setHwStep2Addr(hwAddress); setView('hw-step2'); return }
       if (data.roles.length === 1) {
         routeToRole(data.roles[0] as MatchedRole)
       } else {
@@ -392,7 +527,7 @@ export default function Home() {
         try { sessionStorage.setItem('maia_roles', JSON.stringify(data.roles)) } catch { /* ignore */ }
         setView('role-selector')
       }
-    } catch { setView('homeowner-notfound') } finally { setBusy(false) }
+    } catch { setHwStep2Addr(hwAddress); setView('hw-step2') } finally { setBusy(false) }
   }
 
   async function handleAgentSubmit(e: React.FormEvent) {
@@ -417,16 +552,131 @@ export default function Home() {
     } finally { setBusy(false) }
   }
 
+  async function handleStep2(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true)
+    try {
+      const res  = await fetch('/api/homeowner-lookup-step2', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: hwStep2Addr }),
+      })
+      const data = await res.json()
+      if (!data.found || !data.roles?.length) { setView('hw-step3'); return }
+      if (data.roles.length === 1) {
+        routeToRole(data.roles[0] as MatchedRole)
+      } else {
+        setMatchedRoles(data.roles as MatchedRole[])
+        try { sessionStorage.setItem('maia_roles', JSON.stringify(data.roles)) } catch { /* ignore */ }
+        setView('role-selector')
+      }
+    } catch { setView('hw-step3') } finally { setBusy(false) }
+  }
+
+  async function handleStep3(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true)
+    try {
+      const res  = await fetch('/api/homeowner-lookup-step3', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ association: hwStep3Assoc, unit: hwStep3Unit }),
+      })
+      const data = await res.json()
+      if (!data.found || !data.roles?.length) { setView('hw-escalate'); return }
+      if (data.roles.length === 1) {
+        routeToRole(data.roles[0] as MatchedRole)
+      } else {
+        setMatchedRoles(data.roles as MatchedRole[])
+        try { sessionStorage.setItem('maia_roles', JSON.stringify(data.roles)) } catch { /* ignore */ }
+        setView('role-selector')
+      }
+    } catch { setView('hw-escalate') } finally { setBusy(false) }
+  }
+
+  async function handleEscalateForm(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true)
+    try {
+      const res = await fetch('/api/escalate-unidentified', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: escalFirst, lastName: escalLast,
+          email: escalEmail, phone: escalPhone,
+          address: escalAddr, unit: escalUnit,
+          association: escalAssoc, howHear: escalHowHear,
+          needHelp: escalNeedHelp, lang,
+        }),
+      })
+      const data = await res.json()
+      setEscalRef(data.refNumber ?? '')
+      setView('hw-escalate-sent')
+    } catch { setView('hw-escalate-sent') } finally { setBusy(false) }
+  }
+
+  async function handleChatSend(e?: React.FormEvent) {
+    if (e) e.preventDefault()
+    if (!chatInput.trim() || chatBusy) return
+    const userMsg = chatInput.trim()
+    setChatInput('')
+    setChatMessages(prev => [...prev, { role: 'user' as const, content: userMsg }])
+    setChatBusy(true)
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMsg, history: chatMessages, lang, context: 'unidentified' }),
+      })
+      const data = await res.json()
+      setChatMessages(prev => [...prev, { role: 'assistant' as const, content: data.reply ?? "I'm sorry, I couldn't process that. Our team will follow up with you." }])
+    } catch {
+      setChatMessages(prev => [...prev, { role: 'assistant' as const, content: "I'm having trouble right now. Please try again or use the form option." }])
+    } finally { setChatBusy(false) }
+  }
+
+  async function handleChatEscalate() {
+    setBusy(true)
+    try {
+      const transcript = chatMessages.map(m => `${m.role === 'user' ? 'Visitor' : 'MAIA'}: ${m.content}`).join('\n')
+      const res = await fetch('/api/escalate-unidentified', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: hwFirst, lastName: hwLast,
+          email: hwEmail, phone: hwPhone,
+          needHelp: transcript, lang, howHear: 'MAIA Chat',
+        }),
+      })
+      const data = await res.json()
+      setEscalRef(data.refNumber ?? '')
+      setView('hw-chat-sent')
+    } catch { setView('hw-chat-sent') } finally { setBusy(false) }
+  }
+
   // ── Shared sub-components ─────────────────────────────────────────────────────
 
-  const BackBtn = () => (
+  const BackBtn = ({ onClick }: { onClick?: () => void } = {}) => (
     <button
-      onClick={() => { setMatchedRoles([]); setView('home') }}
+      onClick={onClick ?? (() => { setMatchedRoles([]); setView('home') })}
       className="inline-flex items-center gap-1 text-[0.72rem] text-[#9ca3af] hover:text-[#f26a1b] [font-family:var(--font-mono)] uppercase tracking-[0.08em] mb-4 transition-colors"
     >
       {t.back}
     </button>
   )
+
+  function MaiaBubble({ text }: { text: string }) {
+    return (
+      <div className={`flex gap-2.5 mb-4 ${isRtl ? 'flex-row-reverse' : ''}`}>
+        <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden mt-0.5">
+          <Image src="/pmi-icon.jpg" alt="MAIA" width={28} height={28} className="object-cover" />
+        </div>
+        <div
+          className="flex-1 rounded-2xl px-4 py-3 text-[0.82rem] text-white leading-relaxed"
+          style={{
+            borderTopLeftRadius: isRtl ? undefined : '4px',
+            borderTopRightRadius: isRtl ? '4px' : undefined,
+            background: 'rgba(242,106,27,0.10)',
+            border: '1px solid rgba(242,106,27,0.22)',
+          }}
+        >
+          {text}
+        </div>
+      </div>
+    )
+  }
 
   const OrangeBtn = ({ label, disabled }: { label: string; disabled?: boolean }) => (
     <button type="submit" disabled={disabled}
@@ -637,6 +887,7 @@ export default function Home() {
                             {savedPersona.type === 'staff' && 'PMI Staff Dashboard'}
                             {savedPersona.type === 'owner' && `Unit Owner — ${savedPersona.association_name}`}
                             {savedPersona.type === 'board' && `Board Member — ${savedPersona.association_name}`}
+                            {savedPersona.type === 'tenant' && `Tenant — ${savedPersona.association_name}`}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -786,9 +1037,9 @@ export default function Home() {
                     <p className="text-sm text-[#9ca3af] mb-4">Your account exists in multiple roles. How would you like to access today?</p>
                     <div className="flex flex-col gap-2">
                       {matchedRoles.map((role, i) => {
-                        const icon  = role.type === 'staff' ? '🔒' : role.type === 'owner' ? '🏠' : '👥'
-                        const title = role.type === 'staff' ? 'PMI Staff' : role.type === 'owner' ? 'Unit Owner' : `Board Member${role.position ? ` — ${role.position}` : ''}`
-                        const sub   = role.type === 'staff' ? 'Access staff dashboard' : role.type === 'owner' ? `View my account — ${role.association_name}` : `Access board portal — ${role.association_name}`
+                        const icon  = role.type === 'staff' ? '🔒' : role.type === 'owner' ? '🏠' : role.type === 'tenant' ? '🏘' : '👥'
+                        const title = role.type === 'staff' ? 'PMI Staff' : role.type === 'owner' ? 'Unit Owner' : role.type === 'tenant' ? 'Tenant' : role.type === 'board' ? `Board Member${role.position ? ` — ${role.position}` : ''}` : 'Unknown'
+                        const sub   = role.type === 'staff' ? 'Access staff dashboard' : role.type === 'owner' ? `View my account — ${role.association_name}` : role.type === 'tenant' ? `Resident portal — ${role.association_name}` : role.type === 'board' ? `Access board portal — ${role.association_name}` : ''
                         return (
                           <button key={i} onClick={() => routeToRole(role)}
                             className="group flex items-center gap-3 p-3 rounded-[3px] transition-all text-left"
@@ -892,6 +1143,259 @@ export default function Home() {
                     >
                       📄 Download ACH Authorization Form
                     </a>
+                  </div>
+                )}
+
+                {/* ── HW STEP 2 (address search) ───────────────────────── */}
+                {view === 'hw-step2' && (
+                  <div className="maia-fade">
+                    <BackBtn onClick={() => setView('homeowner-form')} />
+                    <MaiaBubble text={ID_MSGS[lang].step2} />
+                    <form onSubmit={handleStep2} className="space-y-3">
+                      <div>
+                        <label className={labelCls}>{ID_MSGS[lang].step2Addr}</label>
+                        <input
+                          className={inputCls}
+                          value={hwStep2Addr}
+                          onChange={e => setHwStep2Addr(e.target.value)}
+                          placeholder="e.g. 203 · 1234 Sunset Blvd"
+                          dir="ltr"
+                        />
+                      </div>
+                      <OrangeBtn label={busy ? ID_MSGS[lang].step2Busy : ID_MSGS[lang].step2Btn} disabled={busy || !hwStep2Addr.trim()} />
+                    </form>
+                  </div>
+                )}
+
+                {/* ── HW STEP 3 (association + unit) ───────────────────── */}
+                {view === 'hw-step3' && (
+                  <div className="maia-fade">
+                    <BackBtn onClick={() => setView('hw-step2')} />
+                    <MaiaBubble text={ID_MSGS[lang].step3} />
+                    <form onSubmit={handleStep3} className="space-y-3">
+                      <div>
+                        <label className={labelCls}>{ID_MSGS[lang].step3Assoc}</label>
+                        <input
+                          className={inputCls}
+                          value={hwStep3Assoc}
+                          onChange={e => setHwStep3Assoc(e.target.value)}
+                          placeholder="e.g. Sunset Gardens"
+                          dir="ltr"
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>{ID_MSGS[lang].step3Unit}</label>
+                        <input
+                          className={inputCls}
+                          value={hwStep3Unit}
+                          onChange={e => setHwStep3Unit(e.target.value)}
+                          placeholder="e.g. 203"
+                          dir="ltr"
+                        />
+                      </div>
+                      <OrangeBtn label={busy ? ID_MSGS[lang].step3Busy : ID_MSGS[lang].step3Btn} disabled={busy || !hwStep3Assoc.trim()} />
+                    </form>
+                  </div>
+                )}
+
+                {/* ── HW ESCALATE (choose option) ──────────────────────── */}
+                {view === 'hw-escalate' && (
+                  <div className="maia-fade">
+                    <BackBtn onClick={() => setView('hw-step3')} />
+                    <MaiaBubble text={ID_MSGS[lang].step4} />
+                    <div className="flex flex-col gap-3">
+                      <button
+                        onClick={() => {
+                          setEscalFirst(hwFirst); setEscalLast(hwLast)
+                          setEscalEmail(hwEmail); setEscalPhone(hwPhone)
+                          setEscalAddr(hwStep2Addr); setEscalAssoc(hwStep3Assoc)
+                          setEscalUnit(hwStep3Unit)
+                          setView('hw-escalate-form')
+                        }}
+                        className="flex items-start gap-3 p-4 rounded-[4px] text-left transition-all"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(242,106,27,0.45)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+                      >
+                        <span className="text-2xl flex-shrink-0">📋</span>
+                        <div>
+                          <div className="text-sm font-semibold text-white mb-1">{ID_MSGS[lang].optATitle}</div>
+                          <div className="text-[0.72rem] text-[#9ca3af] leading-snug">{ID_MSGS[lang].optADesc}</div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setChatMessages([{ role: 'assistant', content: ID_MSGS[lang].chatWelcome }])
+                          setView('hw-chat')
+                        }}
+                        className="flex items-start gap-3 p-4 rounded-[4px] text-left transition-all"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(242,106,27,0.45)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+                      >
+                        <span className="text-2xl flex-shrink-0">💬</span>
+                        <div>
+                          <div className="text-sm font-semibold text-white mb-1">{ID_MSGS[lang].optBTitle}</div>
+                          <div className="text-[0.72rem] text-[#9ca3af] leading-snug">{ID_MSGS[lang].optBDesc}</div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── HW ESCALATE FORM ─────────────────────────────────── */}
+                {view === 'hw-escalate-form' && (
+                  <div className="maia-fade">
+                    <BackBtn onClick={() => setView('hw-escalate')} />
+                    <h2 className={`text-base font-light text-white mb-4 [font-family:var(--font-display)] ${isRtl ? 'text-right' : ''}`}>{ID_MSGS[lang].escTitle}</h2>
+                    <form onSubmit={handleEscalateForm} className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><label className={labelCls}>{t.firstName}</label><input className={inputCls} value={escalFirst} onChange={e => setEscalFirst(e.target.value)} dir="ltr" /></div>
+                        <div><label className={labelCls}>{t.lastName}</label><input className={inputCls} value={escalLast} onChange={e => setEscalLast(e.target.value)} dir="ltr" /></div>
+                      </div>
+                      <div><label className={labelCls}>{t.email}</label><input type="email" className={inputCls} value={escalEmail} onChange={e => setEscalEmail(e.target.value)} dir="ltr" /></div>
+                      <div><label className={labelCls}>{t.phone}</label><input type="tel" className={inputCls} value={escalPhone} onChange={e => setEscalPhone(e.target.value)} dir="ltr" /></div>
+                      <div><label className={labelCls}>Property Address</label><input className={inputCls} value={escalAddr} onChange={e => setEscalAddr(e.target.value)} dir="ltr" /></div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><label className={labelCls}>{ID_MSGS[lang].escUnit}</label><input className={inputCls} value={escalUnit} onChange={e => setEscalUnit(e.target.value)} dir="ltr" /></div>
+                        <div><label className={labelCls}>Association</label><input className={inputCls} value={escalAssoc} onChange={e => setEscalAssoc(e.target.value)} dir="ltr" /></div>
+                      </div>
+                      <div>
+                        <label className={labelCls}>{ID_MSGS[lang].escHowHear}</label>
+                        <input className={inputCls} value={escalHowHear} onChange={e => setEscalHowHear(e.target.value)} dir="ltr" />
+                      </div>
+                      <div>
+                        <label className={labelCls}>{ID_MSGS[lang].escNeedHelp}</label>
+                        <textarea
+                          className={`${inputCls} resize-none`}
+                          rows={3}
+                          value={escalNeedHelp}
+                          onChange={e => setEscalNeedHelp(e.target.value)}
+                          dir={isRtl ? 'rtl' : 'ltr'}
+                        />
+                      </div>
+                      <OrangeBtn label={busy ? ID_MSGS[lang].escBusy : ID_MSGS[lang].escSendBtn} disabled={busy} />
+                    </form>
+                  </div>
+                )}
+
+                {/* ── HW ESCALATE SENT ─────────────────────────────────── */}
+                {view === 'hw-escalate-sent' && (
+                  <div className="maia-fade text-center py-4">
+                    <div className="text-4xl mb-3">✅</div>
+                    <h2 className="text-base font-light text-white mb-2 [font-family:var(--font-display)]">{ID_MSGS[lang].escSentTitle}</h2>
+                    <p className="text-sm text-[#9ca3af] mb-4">{ID_MSGS[lang].escSentBody}</p>
+                    {escalRef && (
+                      <div className="inline-block px-4 py-3 rounded-[4px] mb-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <div className="text-[0.6rem] [font-family:var(--font-mono)] uppercase tracking-[0.1em] text-[#9ca3af] mb-1">Reference Number</div>
+                        <div className="text-lg font-bold [font-family:var(--font-mono)] text-[#f26a1b]">{escalRef}</div>
+                      </div>
+                    )}
+                    <button onClick={() => setView('home')} className="block mx-auto text-[0.72rem] text-[#9ca3af] hover:text-[#f26a1b] [font-family:var(--font-mono)] uppercase tracking-[0.08em] transition-colors">
+                      {t.back}
+                    </button>
+                  </div>
+                )}
+
+                {/* ── HW CHAT ──────────────────────────────────────────── */}
+                {view === 'hw-chat' && (
+                  <div className="maia-fade flex flex-col h-full">
+                    <BackBtn onClick={() => setView('hw-escalate')} />
+                    <div className="flex flex-col gap-3 mb-4 flex-1 overflow-y-auto" style={{ maxHeight: '320px' }}>
+                      {chatMessages.map((msg, i) => (
+                        <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? (isRtl ? '' : 'flex-row-reverse') : (isRtl ? 'flex-row-reverse' : '')}`}>
+                          {msg.role === 'assistant' && (
+                            <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden mt-0.5">
+                              <Image src="/pmi-icon.jpg" alt="MAIA" width={28} height={28} className="object-cover" />
+                            </div>
+                          )}
+                          <div
+                            className="max-w-[80%] rounded-2xl px-4 py-3 text-[0.82rem] leading-relaxed"
+                            style={msg.role === 'assistant' ? {
+                              borderTopLeftRadius: isRtl ? undefined : '4px',
+                              borderTopRightRadius: isRtl ? '4px' : undefined,
+                              background: 'rgba(242,106,27,0.10)',
+                              border: '1px solid rgba(242,106,27,0.22)',
+                              color: '#fff',
+                            } : {
+                              background: 'rgba(255,255,255,0.06)',
+                              border: '1px solid rgba(255,255,255,0.10)',
+                              color: '#e5e7eb',
+                            }}
+                          >
+                            {msg.content}
+                          </div>
+                        </div>
+                      ))}
+                      {chatBusy && (
+                        <div className={`flex gap-2.5 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                          <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden mt-0.5">
+                            <Image src="/pmi-icon.jpg" alt="MAIA" width={28} height={28} className="object-cover" />
+                          </div>
+                          <div className="px-4 py-3 rounded-2xl text-[0.82rem] text-[#9ca3af]" style={{ background: 'rgba(242,106,27,0.06)', border: '1px solid rgba(242,106,27,0.15)' }}>
+                            <span style={{ animation: 'dot-pulse 1.2s ease-in-out infinite' }}>●</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <form onSubmit={handleChatSend} className="flex gap-2">
+                      <input
+                        className={`${inputCls} flex-1`}
+                        value={chatInput}
+                        onChange={e => setChatInput(e.target.value)}
+                        placeholder={ID_MSGS[lang].chatPlaceholder}
+                        disabled={chatBusy}
+                        dir={isRtl ? 'rtl' : 'ltr'}
+                      />
+                      <button
+                        type="submit"
+                        disabled={chatBusy || !chatInput.trim()}
+                        className="bg-[#f26a1b] hover:bg-[#f58140] disabled:opacity-50 text-white [font-family:var(--font-mono)] text-[0.62rem] uppercase tracking-[0.08em] px-4 py-2 rounded-[2px] transition-colors flex-shrink-0"
+                      >
+                        {ID_MSGS[lang].chatSend}
+                      </button>
+                    </form>
+                    <button
+                      onClick={handleChatEscalate}
+                      disabled={busy || chatMessages.length < 2}
+                      className="mt-3 w-full text-[0.62rem] [font-family:var(--font-mono)] uppercase tracking-[0.08em] py-2 rounded-[2px] transition-colors disabled:opacity-50"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#9ca3af' }}
+                    >
+                      {ID_MSGS[lang].chatEndBtn}
+                    </button>
+                  </div>
+                )}
+
+                {/* ── HW CHAT SENT ─────────────────────────────────────── */}
+                {view === 'hw-chat-sent' && (
+                  <div className="maia-fade text-center py-4">
+                    <div className="text-4xl mb-3">💬</div>
+                    <h2 className="text-base font-light text-white mb-2 [font-family:var(--font-display)]">{ID_MSGS[lang].chatSentTitle}</h2>
+                    <p className="text-sm text-[#9ca3af] mb-4">{ID_MSGS[lang].chatSentBody}</p>
+                    {escalRef && (
+                      <div className="inline-block px-4 py-3 rounded-[4px] mb-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <div className="text-[0.6rem] [font-family:var(--font-mono)] uppercase tracking-[0.1em] text-[#9ca3af] mb-1">Reference Number</div>
+                        <div className="text-lg font-bold [font-family:var(--font-mono)] text-[#f26a1b]">{escalRef}</div>
+                      </div>
+                    )}
+                    <button onClick={() => setView('home')} className="block mx-auto text-[0.72rem] text-[#9ca3af] hover:text-[#f26a1b] [font-family:var(--font-mono)] uppercase tracking-[0.08em] transition-colors">
+                      {t.back}
+                    </button>
+                  </div>
+                )}
+
+                {/* ── HW 2FA ───────────────────────────────────────────── */}
+                {view === 'hw-2fa' && pending2FA && (
+                  <div className="maia-fade">
+                    <BackBtn onClick={() => { setPending2FA(null); setView('homeowner-form') }} />
+                    <TwoFactorAuth
+                      role={pending2FA}
+                      email={hwEmail}
+                      phone={hwPhone}
+                      lang={lang}
+                      onVerified={() => navigateToPortal(pending2FA)}
+                      onBack={() => { setPending2FA(null); setView('homeowner-form') }}
+                    />
                   </div>
                 )}
 
