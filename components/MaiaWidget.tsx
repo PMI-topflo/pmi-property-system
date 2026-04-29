@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import AddressSearch from '@/components/AddressSearch'
+import type { AddressResult } from '@/app/api/address-search/route'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -19,7 +21,6 @@ interface Msg {
   feedback?: 'positive' | 'negative'
 }
 
-interface Assoc { association_code: string; association_name: string }
 
 // ── Persona config ────────────────────────────────────────────────────────────
 
@@ -301,7 +302,6 @@ export default function MaiaWidget({ embedded = false }: { embedded?: boolean })
   const [loading,    setLoading]    = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [isMobile,   setIsMobile]   = useState(false)
-  const [assocs,     setAssocs]     = useState<Assoc[]>([])
   const [assocCode,  setAssocCode]  = useState('')
   const [assocName,  setAssocName]  = useState('')
 
@@ -313,6 +313,8 @@ export default function MaiaWidget({ embedded = false }: { embedded?: boolean })
   const [lookup,     setLookup]     = useState({ firstName: '', lastName: '', email: '', phone: '' })
   const [agentForm,  setAgentForm]  = useState({ name: '', email: '', phone: '', licenseNumber: '', association: '' })
   const [vendorForm, setVendorForm] = useState({ companyName: '', contactName: '', email: '', phone: '', association: '' })
+  const [agentAssoc,  setAgentAssoc]  = useState<AddressResult | null>(null)
+  const [vendorAssoc, setVendorAssoc] = useState<AddressResult | null>(null)
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const t = T[lang]
@@ -326,10 +328,7 @@ export default function MaiaWidget({ embedded = false }: { embedded?: boolean })
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // Associations for dropdowns
-  useEffect(() => {
-    fetch('/api/associations').then(r => r.json()).then(setAssocs).catch(() => {})
-  }, [])
+  // (associations fetched on-demand by AddressSearch component)
 
   // Scroll chat to bottom
   useEffect(() => {
@@ -413,7 +412,7 @@ export default function MaiaWidget({ embedded = false }: { embedded?: boolean })
     e.preventDefault(); setSubmitting(true)
     await fetch('/api/agent-inquiry', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(agentForm),
+      body: JSON.stringify({ ...agentForm, association: agentAssoc?.association_name ?? agentForm.association }),
     }).catch(() => {})
     setSubmitting(false); setPhase('agent-sent')
   }
@@ -422,7 +421,7 @@ export default function MaiaWidget({ embedded = false }: { embedded?: boolean })
     e.preventDefault(); setSubmitting(true)
     await fetch('/api/vendor-inquiry', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(vendorForm),
+      body: JSON.stringify({ ...vendorForm, association: vendorAssoc?.association_name ?? vendorForm.association }),
     }).catch(() => {})
     setSubmitting(false); setPhase('vendor-sent')
   }
@@ -562,13 +561,6 @@ export default function MaiaWidget({ embedded = false }: { embedded?: boolean })
     </>
   )
 
-  const AssocSelect = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-    <select value={value} onChange={e => onChange(e.target.value)} style={{ ...S.input, appearance: 'none', backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7570' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: '32px' }}>
-      <option value="">{t.assoc} ({t.optional})</option>
-      {assocs.map(a => <option key={a.association_code} value={a.association_name}>{a.association_name}</option>)}
-    </select>
-  )
-
   const renderAgentForm = () => (
     <div style={{ padding: '16px 14px' }}>
       <div style={{ ...S.card, padding: '20px' }}>
@@ -578,7 +570,7 @@ export default function MaiaWidget({ embedded = false }: { embedded?: boolean })
           <div><label style={S.label}>{t.email} *</label>     <input required type="email" style={S.input} value={agentForm.email}         onChange={e => setAgentForm(p => ({ ...p, email:         e.target.value }))} /></div>
           <div><label style={S.label}>{t.phone}</label>        <input type="tel"   style={S.input} value={agentForm.phone}         onChange={e => setAgentForm(p => ({ ...p, phone:         e.target.value }))} /></div>
           <div><label style={S.label}>{t.license}</label>      <input           style={S.input} value={agentForm.licenseNumber} onChange={e => setAgentForm(p => ({ ...p, licenseNumber: e.target.value }))} /></div>
-          <div><label style={S.label}>{t.assoc}</label><AssocSelect value={agentForm.association} onChange={v => setAgentForm(p => ({ ...p, association: v }))} /></div>
+          <AddressSearch label={t.assoc} selected={agentAssoc} onSelect={setAgentAssoc} dark={false} />
           <button type="submit" disabled={submitting} style={{ ...S.btnGold, opacity: submitting ? 0.6 : 1 }}>{submitting ? t.submitting : t.submit}</button>
         </form>
       </div>
@@ -594,7 +586,7 @@ export default function MaiaWidget({ embedded = false }: { embedded?: boolean })
           <div><label style={S.label}>{t.contact}</label>     <input           style={S.input} value={vendorForm.contactName} onChange={e => setVendorForm(p => ({ ...p, contactName: e.target.value }))} /></div>
           <div><label style={S.label}>{t.email} *</label>     <input required type="email" style={S.input} value={vendorForm.email}       onChange={e => setVendorForm(p => ({ ...p, email:       e.target.value }))} /></div>
           <div><label style={S.label}>{t.phone}</label>        <input type="tel"   style={S.input} value={vendorForm.phone}       onChange={e => setVendorForm(p => ({ ...p, phone:       e.target.value }))} /></div>
-          <div><label style={S.label}>{t.assoc}</label><AssocSelect value={vendorForm.association} onChange={v => setVendorForm(p => ({ ...p, association: v }))} /></div>
+          <AddressSearch label={t.assoc} selected={vendorAssoc} onSelect={setVendorAssoc} dark={false} />
           <button type="submit" disabled={submitting} style={{ ...S.btnGold, opacity: submitting ? 0.6 : 1 }}>{submitting ? t.submitting : t.submit}</button>
         </form>
       </div>
@@ -781,7 +773,7 @@ export default function MaiaWidget({ embedded = false }: { embedded?: boolean })
       >
         {open
           ? <span style={{ color: '#fff', fontSize: '1rem', fontFamily: 'var(--font-mono)' }}>✕</span>
-          : <Image src="/pmi-icon.jpg" alt="PMI" width={56} height={56} style={{ objectFit: 'cover', borderRadius: '50%' }} />
+          : <Image src="/pmi-logo-white.png" alt="PMI" width={56} height={36} style={{ objectFit: 'contain' }} />
         }
       </button>
     </>

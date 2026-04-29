@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import AddressSearch from '@/components/AddressSearch'
+import type { AddressResult } from '@/app/api/address-search/route'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -15,11 +17,6 @@ type MatchedRole =
   | { type: 'staff' }
   | { type: 'owner';  owner_id: number; association_code: string; association_name: string }
   | { type: 'board';  board_member_id: string; association_code: string; association_name: string; position: string | null }
-
-interface AssocOption {
-  association_code: string; association_name: string
-  principal_address?: string | null; city?: string | null; state?: string | null; zip?: string | null
-}
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -38,14 +35,14 @@ const GREETING: Record<Lang, string> = {
 }
 
 const BUBBLES = [
-  { icon: '💳', label: 'Pay HOA Fees',  desc: 'Secure online payments for dues & assessments', cls: 'left-[3%] top-[15%]',   anim: 'bfl-1' },
-  { icon: '📄', label: 'Documents',     desc: 'Rules, financials & governing documents',       cls: 'left-[11%] top-[38%]',  anim: 'bfl-2' },
-  { icon: '📋', label: 'Applications',  desc: 'Rental & purchase application portal',          cls: 'left-[4%] top-[63%]',   anim: 'bfl-3' },
-  { icon: '🔧', label: 'Maintenance',   desc: 'Submit & track requests 24/7',                  cls: 'left-[14%] top-[79%]',  anim: 'bfl-4' },
-  { icon: '🏗',  label: 'ARC Requests', desc: 'Architectural modification permits',            cls: 'right-[3%] top-[15%]',  anim: 'bfl-5' },
-  { icon: '🚗', label: 'Parking',       desc: 'Vehicle registration & parking passes',         cls: 'right-[11%] top-[38%]', anim: 'bfl-6' },
-  { icon: '📞', label: 'Contact Us',    desc: '24/7 support — phone, SMS & WhatsApp',          cls: 'right-[4%] top-[63%]',  anim: 'bfl-7' },
-  { icon: '🏦', label: 'Vendor ACH',    desc: 'ACH setup & COI document submission',           cls: 'right-[14%] top-[79%]', anim: 'bfl-8' },
+  { icon: '💳', label: 'Pay HOA Fees',  desc: 'Secure online payments for dues & assessments', side: 'left'  as const, anim: 'bfl-1' },
+  { icon: '📄', label: 'Documents',     desc: 'Rules, financials & governing documents',        side: 'left'  as const, anim: 'bfl-2' },
+  { icon: '📋', label: 'Applications',  desc: 'Rental & purchase application portal',           side: 'left'  as const, anim: 'bfl-3' },
+  { icon: '🔧', label: 'Maintenance',   desc: 'Submit & track requests 24/7',                   side: 'left'  as const, anim: 'bfl-4' },
+  { icon: '🏗',  label: 'ARC Requests', desc: 'Architectural modification permits',             side: 'right' as const, anim: 'bfl-5' },
+  { icon: '🚗', label: 'Parking',       desc: 'Vehicle registration & parking passes',          side: 'right' as const, anim: 'bfl-6' },
+  { icon: '📞', label: 'Contact Us',    desc: '24/7 support — phone, SMS & WhatsApp',           side: 'right' as const, anim: 'bfl-7' },
+  { icon: '🏦', label: 'Vendor ACH',    desc: 'ACH setup & COI document submission',            side: 'right' as const, anim: 'bfl-8' },
 ]
 
 // ── Translations ──────────────────────────────────────────────────────────────
@@ -63,7 +60,6 @@ interface T {
   vendorTitle: string; vendorSubtitle: string
   company: string; contactName: string; vendorAssoc: string; vendorSendBtn: string; vendorBusy: string
   vendorSentTitle: string; vendorSentBody: string
-  selectAssoc: string
   personas: Persona[]
 }
 
@@ -88,7 +84,6 @@ const COPY: Record<Lang, T> = {
     vendorSendBtn: 'Submit', vendorBusy: 'Sending…',
     vendorSentTitle: 'Thank You!',
     vendorSentBody: "We've sent the required forms to your email. Our billing team will follow up shortly.",
-    selectAssoc: '— Select Association —',
     personas: [
       { key: 'homeowner', icon: '🏠', title: 'Unit Owner',       desc: 'Access your association portal & account' },
       { key: 'applicant', icon: '📋', title: 'Applicant',         desc: 'Apply to rent or purchase a unit' },
@@ -118,7 +113,6 @@ const COPY: Record<Lang, T> = {
     vendorSendBtn: 'Enviar', vendorBusy: 'Enviando…',
     vendorSentTitle: '¡Gracias!',
     vendorSentBody: 'Hemos enviado los formularios requeridos a tu correo. Nuestro equipo de facturación hará seguimiento.',
-    selectAssoc: '— Seleccionar Asociación —',
     personas: [
       { key: 'homeowner', icon: '🏠', title: 'Propietario de Unidad',  desc: 'Accede al portal y tu cuenta de asociación' },
       { key: 'applicant', icon: '📋', title: 'Solicitante',            desc: 'Solicita alquilar o comprar una unidad' },
@@ -148,7 +142,6 @@ const COPY: Record<Lang, T> = {
     vendorSendBtn: 'Enviar', vendorBusy: 'Enviando…',
     vendorSentTitle: 'Obrigado!',
     vendorSentBody: 'Enviamos os formulários necessários para seu e-mail. Nossa equipe de cobrança entrará em contato.',
-    selectAssoc: '— Selecionar Associação —',
     personas: [
       { key: 'homeowner', icon: '🏠', title: 'Proprietário de Unidade', desc: 'Acesse o portal e sua conta de associação' },
       { key: 'applicant', icon: '📋', title: 'Candidato',               desc: 'Candidate-se para alugar ou comprar' },
@@ -178,7 +171,6 @@ const COPY: Record<Lang, T> = {
     vendorSendBtn: 'Envoyer', vendorBusy: 'Envoi…',
     vendorSentTitle: 'Merci !',
     vendorSentBody: 'Nous avons envoyé les formulaires requis à votre adresse e-mail.',
-    selectAssoc: '— Sélectionner une Association —',
     personas: [
       { key: 'homeowner', icon: '🏠', title: "Propriétaire d'Unité",  desc: 'Accédez au portail et à votre compte' },
       { key: 'applicant', icon: '📋', title: 'Candidat',              desc: 'Postulez dans nos communautés' },
@@ -208,7 +200,6 @@ const COPY: Record<Lang, T> = {
     vendorSendBtn: 'שלח', vendorBusy: 'שולח…',
     vendorSentTitle: 'תודה!',
     vendorSentBody: 'שלחנו את הטפסים הנדרשים לכתובת המייל שלך.',
-    selectAssoc: '— בחר עמותה —',
     personas: [
       { key: 'homeowner', icon: '🏠', title: 'בעל יחידה',      desc: 'גש לפורטל ולחשבון העמותה שלך' },
       { key: 'applicant', icon: '📋', title: 'מועמד',           desc: 'הגש מועמדות לשכירות או רכישה' },
@@ -238,7 +229,6 @@ const COPY: Record<Lang, T> = {
     vendorSendBtn: 'Отправить', vendorBusy: 'Отправка…',
     vendorSentTitle: 'Спасибо!',
     vendorSentBody: 'Мы отправили необходимые формы на ваш email. Наша команда по выставлению счетов свяжется с вами.',
-    selectAssoc: '— Выберите ассоциацию —',
     personas: [
       { key: 'homeowner', icon: '🏠', title: 'Владелец Единицы',     desc: 'Доступ к порталу и аккаунту ассоциации' },
       { key: 'applicant', icon: '📋', title: 'Соискатель',            desc: 'Подайте заявку на аренду или покупку' },
@@ -257,8 +247,8 @@ const labelCls = 'block mb-1 text-[0.62rem] font-medium uppercase tracking-[0.1e
 
 // ── VendorCoiCard ─────────────────────────────────────────────────────────────
 
-function VendorCoiCard({ assocData }: { assocData: AssocOption | undefined }) {
-  if (!assocData?.principal_address) {
+function VendorCoiCard({ result }: { result: AddressResult | null }) {
+  if (!result?.principal_address) {
     return (
       <div className="bg-[#1a1a1a] border border-[#333] rounded-[3px] p-3 text-[0.72rem] text-[#9ca3af] leading-relaxed">
         <span className="font-medium text-white">📋 COI Additional Insured</span><br />
@@ -266,12 +256,12 @@ function VendorCoiCard({ assocData }: { assocData: AssocOption | undefined }) {
       </div>
     )
   }
-  const addr = `${assocData.principal_address}, ${assocData.city}, ${assocData.state ?? 'FL'} ${assocData.zip}`
+  const addr = [result.principal_address, result.city, result.state ?? 'FL', result.zip].filter(Boolean).join(', ')
   return (
     <div className="bg-[#0d1a10] border border-[#1e4d2b] rounded-[3px] p-3 space-y-1.5">
       <div className="text-[0.6rem] font-medium uppercase tracking-[0.1em] text-[#4ade80] [font-family:var(--font-mono)]">📋 COI Additional Insured Requirements</div>
       <ol className="text-[0.72rem] text-white leading-relaxed space-y-1 list-decimal list-inside">
-        <li><span className="font-medium">{assocData.association_name}</span><br /><span className="text-[#9ca3af] pl-4">{addr}</span></li>
+        <li><span className="font-medium">{result.association_name}</span><br /><span className="text-[#9ca3af] pl-4">{addr}</span></li>
         <li><span className="font-medium">PMI Top Florida Properties</span><br /><span className="text-[#9ca3af] pl-4">1031 Ives Dairy Road Suite 228, Miami, FL 33179</span></li>
       </ol>
       <p className="text-[0.68rem] text-[#9ca3af] pt-1">Forward to your insurance agent · Questions? <a href="mailto:billing@topfloridaproperties.com" className="text-[#f26a1b]">billing@topfloridaproperties.com</a></p>
@@ -308,21 +298,14 @@ export default function Home() {
   const [agEmail,   setAgEmail]   = useState('')
   const [agPhone,   setAgPhone]   = useState('')
   const [agLicense, setAgLicense] = useState('')
-  const [agAssoc,   setAgAssoc]   = useState('')
+  const [agAssoc,   setAgAssoc]   = useState<AddressResult | null>(null)
 
   // Vendor form
   const [vdCompany, setVdCompany] = useState('')
   const [vdContact, setVdContact] = useState('')
   const [vdEmail,   setVdEmail]   = useState('')
   const [vdPhone,   setVdPhone]   = useState('')
-  const [vdAssoc,   setVdAssoc]   = useState('')
-
-  // Associations list
-  const [associations, setAssociations] = useState<AssocOption[]>([])
-
-  useEffect(() => {
-    fetch('/api/associations').then(r => r.json()).then(setAssociations).catch(() => {})
-  }, [])
+  const [vdAssoc,   setVdAssoc]   = useState<AddressResult | null>(null)
 
   // Restore saved persona
   useEffect(() => {
@@ -410,7 +393,7 @@ export default function Home() {
     try {
       await fetch('/api/agent-inquiry', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: agName, email: agEmail, phone: agPhone, licenseNumber: agLicense, association: agAssoc }),
+        body: JSON.stringify({ name: agName, email: agEmail, phone: agPhone, licenseNumber: agLicense, association: agAssoc?.association_name ?? '' }),
       })
       setView('agent-sent')
     } finally { setBusy(false) }
@@ -421,7 +404,7 @@ export default function Home() {
     try {
       await fetch('/api/vendor-inquiry', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ companyName: vdCompany, contactName: vdContact, email: vdEmail, phone: vdPhone, association: vdAssoc }),
+        body: JSON.stringify({ companyName: vdCompany, contactName: vdContact, email: vdEmail, phone: vdPhone, association: vdAssoc?.association_name ?? '' }),
       })
       setView('vendor-sent')
     } finally { setBusy(false) }
@@ -436,18 +419,6 @@ export default function Home() {
     >
       {t.back}
     </button>
-  )
-
-  const AssocSelect = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
-    <div>
-      <label className={labelCls}>{label}</label>
-      <select value={value} onChange={e => onChange(e.target.value)} className={inputCls + ' [color-scheme:dark]'}>
-        <option value="">{associations.length === 0 ? '— Loading… —' : t.selectAssoc}</option>
-        {associations.map(a => (
-          <option key={a.association_code} value={a.association_name}>{a.association_name}</option>
-        ))}
-      </select>
-    </div>
   )
 
   const OrangeBtn = ({ label, disabled }: { label: string; disabled?: boolean }) => (
@@ -553,58 +524,55 @@ export default function Home() {
             transition: 'opacity 0.8s ease 0.15s',
           }}
         >
-          {/* Desktop floating bubbles (xl+ only) */}
-          <div className="hidden xl:block absolute inset-0" style={{ pointerEvents: 'none' }}>
-            {BUBBLES.map((b, i) => (
-              <div
-                key={b.label}
-                className={`absolute bubble-wrap ${b.cls}`}
-                style={{
-                  animation: `${b.anim} ${5.5 + i * 0.55}s ease-in-out infinite`,
-                  animationDelay: `${i * 0.38}s`,
-                  pointerEvents: 'auto',
-                  zIndex: 5,
-                }}
-              >
-                {/* Bubble circle */}
+          {/* Desktop layout: left bubbles · widget · right bubbles */}
+          <div className="flex items-center justify-center w-full gap-0">
+
+            {/* Left bubble column */}
+            <div className="hidden xl:flex flex-col gap-5 mr-5 flex-shrink-0">
+              {BUBBLES.filter(b => b.side === 'left').map((b, i) => (
                 <div
-                  className="bubble-circle flex items-center justify-center rounded-full cursor-default select-none"
+                  key={b.label}
+                  className="group relative flex-shrink-0 cursor-default select-none"
                   style={{
-                    width: '80px', height: '80px',
-                    background: 'rgba(255,255,255,0.035)',
-                    border: '1px solid rgba(255,255,255,0.09)',
-                    backdropFilter: 'blur(14px)',
+                    width: '120px', height: '120px',
+                    animation: `${b.anim} ${5.5 + i * 0.55}s ease-in-out infinite`,
+                    animationDelay: `${i * 0.38}s`,
                   }}
                 >
-                  <span className="text-[1.6rem] leading-none">{b.icon}</span>
-                </div>
-                {/* Hover info card */}
-                <div
-                  className="bubble-hover-card absolute left-1/2 z-20 rounded-lg"
-                  style={{
-                    top: '90px',
-                    transform: 'translateX(-50%)',
-                    background: 'rgba(14,14,14,0.97)',
-                    border: '1px solid rgba(242,106,27,0.45)',
-                    boxShadow: '0 4px 24px rgba(242,106,27,0.18), 0 8px 32px rgba(0,0,0,0.5)',
-                    borderRadius: '10px',
-                    padding: '11px 15px',
-                    width: '188px',
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-lg leading-none">{b.icon}</span>
-                    <span className="text-white text-[0.76rem] font-semibold [font-family:var(--font-body)]">{b.label}</span>
+                  <div
+                    className="bubble-circle w-[120px] h-[120px] rounded-full flex flex-col items-center justify-center gap-1.5"
+                    style={{
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.09)',
+                      backdropFilter: 'blur(14px)',
+                    }}
+                  >
+                    <span style={{ fontSize: '32px', lineHeight: 1 }}>{b.icon}</span>
+                    <span style={{ fontSize: '13px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.65)', textAlign: 'center', lineHeight: 1.2, padding: '0 10px' }}>{b.label}</span>
                   </div>
-                  <p className="text-[#9ca3af] text-[0.64rem] leading-relaxed [font-family:var(--font-body)]">{b.desc}</p>
+                  {/* Expanded hover card — grows left (away from widget) */}
+                  <div
+                    className="bubble-hover-card absolute top-0 z-20 rounded-2xl flex items-center gap-3 px-4"
+                    style={{
+                      right: 0, width: '240px', height: '120px',
+                      background: 'rgba(14,14,14,0.97)',
+                      border: '1px solid rgba(242,106,27,0.5)',
+                      boxShadow: '0 0 24px rgba(242,106,27,0.22)',
+                    }}
+                  >
+                    <span style={{ fontSize: '32px', lineHeight: 1, flexShrink: 0 }}>{b.icon}</span>
+                    <div>
+                      <p style={{ fontSize: '13px', fontFamily: 'var(--font-mono)', color: '#fff', fontWeight: 600, marginBottom: '3px' }}>{b.label}</p>
+                      <p style={{ fontSize: '11px', color: '#9ca3af', lineHeight: 1.4 }}>{b.desc}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
           {/* MAIA widget */}
           <div
-            className="relative z-10 w-full max-w-[600px]"
+            className="relative z-10 w-full xl:w-[50vw] xl:min-w-[700px] xl:max-w-[900px]"
             style={{
               transform: phase >= 2 ? 'scale(1)' : 'scale(0.88)',
               transition: 'transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -616,6 +584,9 @@ export default function Home() {
                 background: '#111111',
                 border: '1px solid rgba(242,106,27,0.22)',
                 boxShadow: '0 0 50px rgba(242,106,27,0.10), 0 24px 64px rgba(0,0,0,0.7)',
+                minHeight: '600px',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               {/* Widget header */}
@@ -645,7 +616,7 @@ export default function Home() {
               </div>
 
               {/* Widget body */}
-              <div className="px-5 py-4 overflow-y-auto" style={{ maxHeight: '60vh' }}>
+              <div className="px-5 py-4 overflow-y-auto flex-1" style={{ maxHeight: '560px' }}>
 
                 {/* ── HOME ─────────────────────────────────────────────── */}
                 {view === 'home' && (
@@ -808,7 +779,7 @@ export default function Home() {
                       <div><label className={labelCls}>{t.email} *</label><input required type="email" className={inputCls} value={agEmail} onChange={e => setAgEmail(e.target.value)} dir="ltr" /></div>
                       <div><label className={labelCls}>{t.phone}</label><input type="tel" className={inputCls} value={agPhone} onChange={e => setAgPhone(e.target.value)} dir="ltr" /></div>
                       <div><label className={labelCls}>{t.agentLicense}</label><input className={inputCls} value={agLicense} onChange={e => setAgLicense(e.target.value)} dir="ltr" /></div>
-                      <AssocSelect value={agAssoc} onChange={setAgAssoc} label={t.agentAssoc} />
+                      <AddressSearch label={t.agentAssoc} selected={agAssoc} onSelect={setAgAssoc} dark />
                       <OrangeBtn label={busy ? t.agentBusy : t.agentSendBtn} disabled={busy} />
                     </form>
                   </div>
@@ -859,8 +830,8 @@ export default function Home() {
                       <div><label className={labelCls}>{t.contactName}</label><input className={inputCls} value={vdContact} onChange={e => setVdContact(e.target.value)} dir="ltr" /></div>
                       <div><label className={labelCls}>{t.email} *</label><input required type="email" className={inputCls} value={vdEmail} onChange={e => setVdEmail(e.target.value)} dir="ltr" /></div>
                       <div><label className={labelCls}>{t.phone}</label><input type="tel" className={inputCls} value={vdPhone} onChange={e => setVdPhone(e.target.value)} dir="ltr" /></div>
-                      <AssocSelect value={vdAssoc} onChange={setVdAssoc} label={t.vendorAssoc} />
-                      {vdAssoc && <VendorCoiCard assocData={associations.find(a => a.association_name === vdAssoc)} />}
+                      <AddressSearch label={t.vendorAssoc} selected={vdAssoc} onSelect={setVdAssoc} dark />
+                      {vdAssoc && <VendorCoiCard result={vdAssoc} />}
                       <OrangeBtn label={busy ? t.vendorBusy : t.vendorSendBtn} disabled={busy} />
                     </form>
                   </div>
@@ -885,10 +856,55 @@ export default function Home() {
 
               </div>
             </div>
-          </div>
+          </div>{/* end widget wrapper */}
+
+            {/* Right bubble column */}
+            <div className="hidden xl:flex flex-col gap-5 ml-5 flex-shrink-0">
+              {BUBBLES.filter(b => b.side === 'right').map((b, i) => (
+                <div
+                  key={b.label}
+                  className="group relative flex-shrink-0 cursor-default select-none"
+                  style={{
+                    width: '120px', height: '120px',
+                    animation: `${b.anim} ${5.5 + (i + 4) * 0.55}s ease-in-out infinite`,
+                    animationDelay: `${(i + 4) * 0.38}s`,
+                  }}
+                >
+                  <div
+                    className="bubble-circle w-[120px] h-[120px] rounded-full flex flex-col items-center justify-center gap-1.5"
+                    style={{
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.09)',
+                      backdropFilter: 'blur(14px)',
+                    }}
+                  >
+                    <span style={{ fontSize: '32px', lineHeight: 1 }}>{b.icon}</span>
+                    <span style={{ fontSize: '13px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.65)', textAlign: 'center', lineHeight: 1.2, padding: '0 10px' }}>{b.label}</span>
+                  </div>
+                  {/* Expanded hover card — grows right (away from widget) */}
+                  <div
+                    className="bubble-hover-card absolute top-0 z-20 rounded-2xl flex items-center gap-3 px-4"
+                    style={{
+                      left: 0, width: '240px', height: '120px',
+                      background: 'rgba(14,14,14,0.97)',
+                      border: '1px solid rgba(242,106,27,0.5)',
+                      boxShadow: '0 0 24px rgba(242,106,27,0.22)',
+                    }}
+                  >
+                    <span style={{ fontSize: '32px', lineHeight: 1, flexShrink: 0 }}>{b.icon}</span>
+                    <div>
+                      <p style={{ fontSize: '13px', fontFamily: 'var(--font-mono)', color: '#fff', fontWeight: 600, marginBottom: '3px' }}>{b.label}</p>
+                      <p style={{ fontSize: '11px', color: '#9ca3af', lineHeight: 1.4 }}>{b.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>{/* end desktop flex layout */}
 
           {/* Mobile bubble strip (hidden on xl+) */}
-          <div className="xl:hidden flex gap-2.5 overflow-x-auto mt-5 pb-1 max-w-[600px] w-full" style={{ scrollbarWidth: 'none' }}>
+          <div className="xl:hidden flex gap-2.5 overflow-x-auto mt-5 pb-1 w-full" style={{ scrollbarWidth: 'none' }}>
             {BUBBLES.map(b => (
               <div
                 key={b.label}
@@ -896,11 +912,11 @@ export default function Home() {
                 style={{
                   background: 'rgba(255,255,255,0.035)',
                   border: '1px solid rgba(255,255,255,0.07)',
-                  minWidth: '70px',
+                  minWidth: '72px',
                 }}
               >
-                <span className="text-xl leading-none">{b.icon}</span>
-                <span className="text-[0.55rem] text-[#6b7280] [font-family:var(--font-mono)] uppercase tracking-[0.05em] text-center leading-tight">{b.label}</span>
+                <span style={{ fontSize: '24px', lineHeight: 1 }}>{b.icon}</span>
+                <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#6b7280', textAlign: 'center', lineHeight: 1.2 }}>{b.label}</span>
               </div>
             ))}
           </div>

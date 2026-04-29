@@ -20,23 +20,18 @@ export default function SiteHeader({ subtitle, children }: SiteHeaderProps) {
       gap:            '1rem',
     }}>
 
-      {/* Left — logo + name + subtitle */}
+      {/* Left — logo + subtitle */}
       <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', flexShrink: 0 }}>
         <Image
-          src="/pmi-icon.jpg"
-          alt="PMI"
-          width={40}
+          src="/pmi-logo-white.png"
+          alt="PMI Top Florida Properties"
+          width={130}
           height={40}
-          style={{ borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+          style={{ objectFit: 'contain', objectPosition: 'left center', flexShrink: 0 }}
           priority
         />
-        <div>
-          <div style={{ color: '#fff', fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 600, lineHeight: 1.2, whiteSpace: 'nowrap' }}>
-            PMI Top Florida Properties
-          </div>
-          <div style={{ color: '#6b7280', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginTop: 2, whiteSpace: 'nowrap' }}>
-            {subtitle}
-          </div>
+        <div style={{ color: '#6b7280', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.12em', whiteSpace: 'nowrap' }}>
+          {subtitle}
         </div>
       </a>
 
