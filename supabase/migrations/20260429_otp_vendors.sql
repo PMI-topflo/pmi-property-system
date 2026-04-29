@@ -59,3 +59,17 @@ CREATE TABLE IF NOT EXISTS real_estate_agents (
 
 CREATE INDEX IF NOT EXISTS agents_status_idx ON real_estate_agents (status, created_at DESC);
 CREATE INDEX IF NOT EXISTS agents_email_idx  ON real_estate_agents (email);
+
+-- Row Level Security — service_role only (all writes go through supabaseAdmin server-side)
+ALTER TABLE otp_verifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE vendors            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE real_estate_agents ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "service_role_otp_verifications" ON otp_verifications
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+CREATE POLICY "service_role_vendors" ON vendors
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+CREATE POLICY "service_role_real_estate_agents" ON real_estate_agents
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
