@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
       .select('association_code')
       .in('association_code', codes)
       .ilike('unit_number', unitPattern)
+      .not('status', 'in', '("previous","expired")')
       .limit(5),
   ])
 

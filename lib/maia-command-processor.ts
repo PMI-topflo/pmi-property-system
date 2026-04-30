@@ -56,7 +56,7 @@ interface UpsertResult {
   recordId:         string
   assocName?:       string | null
   isTransfer?:      boolean
-  previousOwner?:   { id: number; name: string; email: string | null; endDate: string }
+  previousOwner?:   { id: number; name: string; email: string | null; endDate: string; leaseStart?: string | null }
   hasActiveTenants?: boolean
 }
 
@@ -354,21 +354,73 @@ async function upsertRecord(ext: ExtractedRecord): Promise<UpsertResult> {
     }
 
     case 'tenant': {
+      const today   = new Date().toISOString().slice(0, 10)
+      const newName = [ext.first_name, ext.last_name].filter(Boolean).join(' ') || 'New Tenant'
+
+      // Find existing active tenant at this unit
+      type PrevTenantRow = { id: number; first_name: string | null; last_name: string | null; email: string | null; lease_start_date: string | null }
+      let prevTenant: PrevTenantRow | null = null
+      if (code && ext.unit_number) {
+        const { data } = await supabaseAdmin
+          .from('association_tenants')
+          .select('id, first_name, last_name, email, lease_start_date')
+          .eq('association_code', code)
+          .eq('unit_number', ext.unit_number)
+          .not('status', 'in', '("previous","expired")')
+          .maybeSingle()
+        prevTenant = (data as PrevTenantRow | null) ?? null
+      }
+
+      const prevTenantName = prevTenant
+        ? ([prevTenant.first_name, prevTenant.last_name].filter(Boolean).join(' ') || 'Previous Tenant')
+        : null
+
+      if (prevTenant) {
+        await supabaseAdmin
+          .from('association_tenants')
+          .update({ status: 'previous', lease_end_date: today, transferred_to: newName })
+          .eq('id', prevTenant.id)
+
+        void supabaseAdmin.from('tenant_history').insert({
+          tenant_id: prevTenant.id, association_code: code, unit_number: ext.unit_number,
+          tenant_name: prevTenantName, action: 'archived', reason: 'new_tenant_added', performed_by: 'maia',
+        })
+      }
+
       const { data, error } = await supabaseAdmin
         .from('association_tenants')
         .insert({
-          association_code: code,
-          unit_number:      ext.unit_number,
-          first_name:       ext.first_name,
-          last_name:        ext.last_name,
-          email:            ext.email,
-          phone:            ext.phone,
-          notes:            ext.notes,
+          association_code:   code,
+          association_name:   assocName,
+          unit_number:        ext.unit_number,
+          first_name:         ext.first_name,
+          last_name:          ext.last_name,
+          email:              ext.email,
+          phone:              ext.phone,
+          notes:              ext.notes,
+          status:             'active',
+          lease_start_date:   today,
+          transferred_from:   prevTenantName,
+          previous_tenant_id: prevTenant?.id ?? null,
+          added_by:           'maia',
         })
         .select('id')
         .single()
       if (error) throw new Error(`association_tenants: ${error.message}`)
-      return { table: 'association_tenants', recordId: String(data.id) }
+
+      void supabaseAdmin.from('tenant_history').insert({
+        tenant_id: data.id, association_code: code, unit_number: ext.unit_number,
+        tenant_name: newName, action: 'added', performed_by: 'maia',
+        metadata: { transferred_from: prevTenantName },
+      })
+
+      return {
+        table:    'association_tenants',
+        recordId: String(data.id),
+        assocName,
+        isTransfer:    !!prevTenant,
+        previousOwner: prevTenant ? { id: prevTenant.id, name: prevTenantName!, email: prevTenant.email ?? null, endDate: today, leaseStart: prevTenant.lease_start_date ?? null } : undefined,
+      }
     }
 
     case 'board_member': {
@@ -453,6 +505,85 @@ async function uploadAttachment(
 }
 
 // ── Reply HTML ────────────────────────────────────────────────────────────────
+
+async function notifyBoardOfNewTenant(associationCode: string, assocName: string | null, unitNumber: string | null, tenantName: string): Promise<void> {
+  const { data: board } = await supabaseAdmin
+    .from('board_members')
+    .select('email')
+    .eq('association_code', associationCode)
+    .eq('active', true)
+  const emails = (board ?? []).map(b => b.email).filter(Boolean) as string[]
+  if (!emails.length) return
+
+  const unit    = unitNumber ? `Unit ${unitNumber}` : 'a unit'
+  const subject = `New Tenant Application — ${unit} at ${assocName ?? associationCode}`
+  const html    = `<!DOCTYPE html><html><body style="font-family:sans-serif;color:#222;max-width:600px;margin:0 auto;padding:20px">
+<p>Dear Board Members,</p>
+<p>A new tenant application has been submitted for <strong>${unit}</strong> at <strong>${assocName ?? associationCode}</strong>.</p>
+<p><strong>Tenant:</strong> ${tenantName}</p>
+<p>This tenant requires board approval before move-in. Please review and approve:</p>
+<p><a href="https://www.pmitop.com/board" style="background:#f26a1b;color:white;padding:10px 20px;text-decoration:none;border-radius:4px;font-weight:600">Review Application →</a></p>
+<p style="color:#6b7280;font-size:12px">— MAIA, PMI Top Florida Properties</p>
+</body></html>`
+
+  void sendEmail({ to: emails, subject, html })
+}
+
+function tenantTransitionHtml(opts: {
+  ext:         ExtractedRecord
+  assocName:   string | null
+  prevTenant:  { name: string; email: string | null; leaseStart: string | null; endDate: string }
+  today:       string
+  ref:         string
+  files:       Array<{ filename: string; url: string | null }>
+}): string {
+  const { ext, assocName, prevTenant, today, ref, files } = opts
+  const newName   = [ext.first_name, ext.last_name].filter(Boolean).join(' ') || '—'
+  const unit      = ext.unit_number ? `Unit ${ext.unit_number}` : ''
+  const filesHtml = files.length
+    ? files.map(f => `<li>${f.filename}${f.url ? ` — <a href="${f.url}" style="color:#f26a1b">view</a>` : ' (upload failed)'}</li>`).join('')
+    : '<li>None</li>'
+
+  return `<!DOCTYPE html><html><body style="font-family:sans-serif;color:#222;max-width:600px;margin:0 auto;padding:20px">
+<div style="border-left:4px solid #22c55e;padding-left:16px;margin-bottom:24px">
+  <p style="font-size:18px;font-weight:600;margin:0">✅ Tenant Transition Complete!</p>
+  <p style="color:#6b7280;margin:4px 0 0">${assocName ?? ext.association_code ?? '—'}${unit ? ` — ${unit}` : ''}</p>
+</div>
+<p style="font-weight:600;color:#6b7280;text-transform:uppercase;font-size:11px;letter-spacing:.08em;margin-bottom:4px">Previous Tenant (access removed)</p>
+<table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+  <tr><td style="padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;font-weight:600;width:140px">Name</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${prevTenant.name}</td></tr>
+  <tr><td style="padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;font-weight:600">Email</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${prevTenant.email ?? '—'}</td></tr>
+  <tr><td style="padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;font-weight:600">Lease period</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${prevTenant.leaseStart ?? '—'} → ${prevTenant.endDate}</td></tr>
+</table>
+<p style="font-weight:600;color:#6b7280;text-transform:uppercase;font-size:11px;letter-spacing:.08em;margin-bottom:4px">New Tenant (pending board approval)</p>
+<table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+  <tr><td style="padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;font-weight:600;width:140px">Name</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${newName}</td></tr>
+  <tr><td style="padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;font-weight:600">Email</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${ext.email ?? '—'}</td></tr>
+  <tr><td style="padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;font-weight:600">Phone</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${ext.phone ?? '—'}</td></tr>
+  <tr><td style="padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;font-weight:600">Lease start</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${today}</td></tr>
+  <tr><td style="padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;font-weight:600">Documents</td><td style="padding:8px 12px;border:1px solid #e5e7eb"><ul style="margin:0;padding-left:16px">${filesHtml}</ul></td></tr>
+</table>
+<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:4px;padding:12px 16px;margin-bottom:20px">
+  <strong>⚠️ Action Needed:</strong> New tenant requires board approval before move-in.
+  <p style="margin:8px 0 0"><a href="https://www.pmitop.com/admin?search=${encodeURIComponent(newName)}" style="color:#f26a1b;font-weight:600">Approve here →</a></p>
+</div>
+<p style="color:#6b7280;font-size:12px">Reference: ${ref}</p>
+<p style="color:#6b7280;font-size:12px">— MAIA, PMI Top Florida Properties</p>
+</body></html>`
+}
+
+function tenantCourtesyHtml(tenantName: string, assocName: string | null, unit: string | null, endDate: string): string {
+  return `<!DOCTYPE html><html><body style="font-family:sans-serif;color:#222;max-width:600px;margin:0 auto;padding:20px">
+<p>Dear ${tenantName},</p>
+<p>This is a courtesy notice to let you know that your tenancy record for <strong>${unit ? `Unit ${unit}` : 'your unit'}</strong> at <strong>${assocName ?? 'your association'}</strong> has been updated in our system. Your lease ended on ${endDate}.</p>
+<p>If you have any questions, please contact PMI Top Florida Properties:</p>
+<ul>
+  <li>Email: <a href="mailto:PMI@topfloridaproperties.com">PMI@topfloridaproperties.com</a></li>
+  <li>Phone: 305.900.5077</li>
+</ul>
+<p style="color:#6b7280;font-size:12px">— PMI Top Florida Properties</p>
+</body></html>`
+}
 
 function transferHtml(opts: {
   ext:              ExtractedRecord
@@ -618,14 +749,31 @@ export async function processEmailCommand(messageId: string): Promise<void> {
       catch (err) { upsertError = err instanceof Error ? err.message : String(err) }
     }
 
-    // Courtesy email to previous owner (fire-and-forget)
-    if (dbResult?.isTransfer && dbResult.previousOwner?.email) {
-      const { name, email: prevEmail, endDate } = dbResult.previousOwner
-      void sendEmail({
-        to:      prevEmail,
-        subject: `Your ownership record has been updated — ${dbResult.assocName ?? extracted.association_code ?? 'your association'}`,
-        html:    courtesyHtml(name, dbResult.assocName ?? null, extracted.unit_number, endDate),
-      })
+    const today = new Date().toISOString().slice(0, 10)
+
+    // Fire-and-forget side effects after successful DB write
+    if (isComplete && !upsertError && dbResult) {
+      const isTenant = extracted.record_type === 'tenant'
+      const isOwner  = extracted.record_type === 'owner'
+
+      // Courtesy email to previous occupant on transfer
+      if (dbResult.isTransfer && dbResult.previousOwner?.email) {
+        const { name, email: prevEmail, endDate } = dbResult.previousOwner
+        void sendEmail({
+          to:      prevEmail,
+          subject: `Your ${isTenant ? 'tenancy' : 'ownership'} record has been updated — ${dbResult.assocName ?? extracted.association_code ?? 'your association'}`,
+          html:    isTenant
+            ? tenantCourtesyHtml(name, dbResult.assocName ?? null, extracted.unit_number, endDate)
+            : courtesyHtml(name, dbResult.assocName ?? null, extracted.unit_number, endDate),
+        })
+      }
+
+      // Board notification on new tenant (transfer or fresh)
+      if (isTenant && extracted.association_code) {
+        const tenantName = [extracted.first_name, extracted.last_name].filter(Boolean).join(' ') || 'New Tenant'
+        void notifyBoardOfNewTenant(extracted.association_code, dbResult.assocName ?? null, extracted.unit_number, tenantName)
+      }
+
     }
 
     // Reply-all (sender + To + CC, minus maia itself)
@@ -633,11 +781,26 @@ export async function processEmailCommand(messageId: string): Promise<void> {
       [parsed.senderEmail, ...parsed.to, ...parsed.cc].filter(e => e && e !== MAIA_EMAIL && e.includes('@'))
     )]
     const replySubject = parsed.subject.startsWith('Re:') ? parsed.subject : `Re: ${parsed.subject}`
-    const today        = new Date().toISOString().slice(0, 10)
     const replyHtml    = (isComplete && !upsertError)
-      ? (dbResult?.isTransfer && dbResult.previousOwner
-          ? transferHtml({
-              ext: extracted,
+      ? (() => {
+          if (dbResult?.isTransfer && dbResult.previousOwner) {
+            if (extracted.record_type === 'tenant') {
+              return tenantTransitionHtml({
+                ext:        extracted,
+                assocName:  dbResult.assocName ?? null,
+                prevTenant: {
+                  name:       dbResult.previousOwner.name,
+                  email:      dbResult.previousOwner.email,
+                  leaseStart: dbResult.previousOwner.leaseStart ?? null,
+                  endDate:    dbResult.previousOwner.endDate,
+                },
+                today,
+                ref,
+                files: uploadedFiles,
+              })
+            }
+            return transferHtml({
+              ext:              extracted,
               assocName:        dbResult.assocName ?? null,
               prevOwner:        dbResult.previousOwner,
               today,
@@ -645,7 +808,9 @@ export async function processEmailCommand(messageId: string): Promise<void> {
               files:            uploadedFiles,
               hasActiveTenants: dbResult.hasActiveTenants ?? false,
             })
-          : successHtml(extracted, ref, uploadedFiles))
+          }
+          return successHtml(extracted, ref, uploadedFiles)
+        })()
       : incompleteHtml(
           { ...extracted, missing_fields: [...(extracted.missing_fields ?? []), ...(upsertError ? ['database_error'] : [])] },
           ref,

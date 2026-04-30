@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       .from('association_tenants')
       .select('association_code, association_name')
       .or(`address.ilike.${pattern},unit_number.ilike.${pattern}`)
+      .not('status', 'in', '("previous","expired")')
       .limit(5),
   ])
 

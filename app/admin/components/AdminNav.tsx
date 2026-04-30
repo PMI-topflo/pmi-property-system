@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { label: 'Pending Approvals', href: '/admin/pending-approvals' },
   { label: 'Login History',     href: '/admin/login-history' },
   { label: 'Ownership History', href: '/admin/ownership-history' },
+  { label: 'Tenancy History',  href: '/admin/tenancy-history' },
 ]
 
 export default function AdminNav() {
