@@ -8,6 +8,7 @@ export interface SessionData {
   persona:         'owner' | 'board' | 'staff' | 'tenant'
   associationCode: string
   displayName:     string
+  contactName:     string   // person's full name for welcome message
   issuedAt:        number
   expiresAt:       number
 }

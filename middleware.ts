@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifySession, SESSION_COOKIE } from '@/lib/session'
 
+// Login paths per persona — staff uses its own login page, others use the homepage
 const PROTECTED: Record<string, { persona: 'owner' | 'board' | 'staff'; loginPath: string }> = {
   '/my-account': { persona: 'owner', loginPath: '/' },
   '/board':      { persona: 'board', loginPath: '/' },
@@ -10,7 +11,7 @@ const PROTECTED: Record<string, { persona: 'owner' | 'board' | 'staff'; loginPat
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // /admin/login is the staff login page — never intercept it
+  // Staff login page is always public — never intercept it or an infinite loop results
   if (pathname === '/admin/login') return NextResponse.next()
 
   const match = Object.entries(PROTECTED).find(([prefix]) =>
@@ -26,24 +27,28 @@ export function middleware(req: NextRequest) {
     const dest = req.nextUrl.clone()
     dest.pathname = route.loginPath
     dest.search   = ''
-    // For owner/board, pass ?return= so the homepage can resume their flow
+    // Owner/board: pass ?return= so the homepage can resume the user's original destination
     if (route.loginPath === '/') {
       dest.searchParams.set('return', pathname + req.nextUrl.search)
     }
     return NextResponse.redirect(dest)
   }
 
-  // Staff can access everything; other personas must match exactly
+  // Staff can access any protected route; other personas must match exactly
   if (session.persona !== 'staff' && session.persona !== route.persona) {
-    const homeUrl = req.nextUrl.clone()
-    homeUrl.pathname = '/'
-    homeUrl.search   = ''
-    return NextResponse.redirect(homeUrl)
+    const dest = req.nextUrl.clone()
+    dest.pathname = '/'
+    dest.search   = ''
+    return NextResponse.redirect(dest)
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/my-account/:path*', '/board/:path*', '/admin/:path*'],
+  matcher: [
+    '/admin/:path*',
+    '/my-account/:path*',
+    '/board/:path*',
+  ],
 }

@@ -61,16 +61,28 @@ export async function POST(req: NextRequest) {
   let userId: string | number = 'unknown'
   let assocCode               = ''
   let displayName             = ''
+  let contactName             = ''
   let sessionPersona: 'owner' | 'board' | 'staff' | 'tenant' = 'owner'
 
   if (role) {
     if (role.type === 'staff')  { userId = 'staff';               sessionPersona = 'staff';  assocCode = 'PMI' }
-    if (role.type === 'owner')  { userId = role.owner_id;         sessionPersona = 'owner';  assocCode = role.association_code; displayName = role.association_name }
-    if (role.type === 'board')  { userId = role.board_member_id;  sessionPersona = 'board';  assocCode = role.association_code; displayName = role.association_name }
+    if (role.type === 'owner')  { userId = role.owner_id;         sessionPersona = 'owner';  assocCode = role.association_code; displayName = role.association_name; contactName = [role.firstName, role.lastName].filter(Boolean).join(' ') }
+    if (role.type === 'board')  { userId = role.board_member_id;  sessionPersona = 'board';  assocCode = role.association_code; displayName = role.association_name; contactName = [role.firstName, role.lastName].filter(Boolean).join(' ') }
     if (role.type === 'tenant') { userId = identifier.trim();     sessionPersona = 'tenant'; assocCode = role.association_code; displayName = role.association_name }
   }
 
-  const session  = makeSession({ userId, persona: sessionPersona, associationCode: assocCode, displayName })
+  // For staff, look up their name from pmi_staff using the identifier (email)
+  if (sessionPersona === 'staff' && !contactName) {
+    const { data: staffRow } = await supabaseAdmin
+      .from('pmi_staff')
+      .select('name')
+      .ilike('email', identifier.trim())
+      .limit(1)
+      .maybeSingle()
+    contactName = staffRow?.name ?? ''
+  }
+
+  const session  = makeSession({ userId, persona: sessionPersona, associationCode: assocCode, displayName, contactName })
   const token    = signSession(session)
 
   logLogin({ event: 'otp_verified', identifier: identifier.trim(), persona: sessionPersona, association_code: assocCode || null, association_name: displayName || null, method: otp.method, ip_address: ip, user_agent: ua, success: true, role_data: role })

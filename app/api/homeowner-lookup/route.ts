@@ -3,8 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export type MatchedRole =
   | { type: 'staff' }
-  | { type: 'owner';  owner_id: number;       association_code: string; association_name: string }
-  | { type: 'board';  board_member_id: string; association_code: string; association_name: string; position: string | null }
+  | { type: 'owner';  owner_id: number;       association_code: string; association_name: string; firstName?: string; lastName?: string }
+  | { type: 'board';  board_member_id: string; association_code: string; association_name: string; position: string | null; firstName?: string; lastName?: string }
   | { type: 'tenant'; association_code: string; association_name: string }
 
 export async function POST(req: NextRequest) {
@@ -98,6 +98,8 @@ export async function POST(req: NextRequest) {
       owner_id: row.id,
       association_code: row.association_code,
       association_name: row.association_name ?? '',
+      firstName: row.first_name ?? undefined,
+      lastName:  row.last_name  ?? undefined,
     })
   }
 
@@ -131,6 +133,8 @@ export async function POST(req: NextRequest) {
         association_code: row.association_code,
         association_name: nameMap[row.association_code] ?? row.association_code,
         position: row.position ?? null,
+        firstName: row.first_name ?? undefined,
+        lastName:  row.last_name  ?? undefined,
       })
     }
   }

@@ -423,8 +423,9 @@ export default function Home() {
   const [chatInput,     setChatInput]     = useState('')
   const [chatBusy,      setChatBusy]      = useState(false)
   const [pending2FA,    setPending2FA]    = useState<MatchedRole | null>(null)
-  const [hasSession,    setHasSession]    = useState(false)
-  const [returnUrl,     setReturnUrl]     = useState<string | null>(null)
+  const [hasSession,      setHasSession]      = useState(false)
+  const [returnUrl,       setReturnUrl]       = useState<string | null>(null)
+  const [sessionContact,  setSessionContact]  = useState('')   // full name from session cookie
 
   // Agent form
   const [agName,    setAgName]    = useState('')
@@ -453,24 +454,32 @@ export default function Home() {
 
     fetch('/api/auth/check-session')
       .then(r => r.json())
-      .then((data: { valid: boolean; session?: { persona: string } }) => {
-        if (!data.valid) return
+      .then((data: { valid: boolean; session?: { persona: string; contactName?: string; displayName?: string; associationCode?: string } }) => {
+        if (!data.valid || !data.session) return
         setHasSession(true)
-        // Sync sessionStorage if cookie exists but sessionStorage was cleared (e.g. new tab)
-        if (!sp && data.session?.persona === 'staff') {
-          const role: MatchedRole = { type: 'staff' }
-          setSavedPersona(role)
-          try { sessionStorage.setItem('maia_persona', JSON.stringify(role)) } catch { /* ignore */ }
+        const { persona: p, contactName: cn = '', displayName: dn = '', associationCode: ac = '' } = data.session
+        if (cn) setSessionContact(cn)
+        // Reconstruct savedPersona from session when sessionStorage was cleared (e.g. new tab)
+        if (!sp) {
+          let role: MatchedRole | null = null
+          if (p === 'staff')  role = { type: 'staff' }
+          if (p === 'owner')  role = { type: 'owner',  owner_id: 0, association_code: ac, association_name: dn }
+          if (p === 'board')  role = { type: 'board',  board_member_id: '', association_code: ac, association_name: dn, position: null }
+          if (p === 'tenant') role = { type: 'tenant', association_code: ac, association_name: dn }
+          if (role) {
+            setSavedPersona(role)
+            try { sessionStorage.setItem('maia_persona', JSON.stringify(role)) } catch { /* ignore */ }
+          }
         }
       })
       .catch(() => { /* network error — fall through to OTP */ })
   }, [])
 
-  // Opening animation sequence — plays once per session, skipped on reload/redirect
+  // Opening animation sequence — plays once per browser session
   useEffect(() => {
     const S = 'the property management people'
     try {
-      if (sessionStorage.getItem('maia_animation_played')) {
+      if (sessionStorage.getItem('maia_animation_done')) {
         setPhase(2); setSloganIdx(S.length); return
       }
     } catch { /* ignore */ }
@@ -479,7 +488,7 @@ export default function Home() {
     const typeId = setInterval(() => { setSloganIdx(++i); if (i >= S.length) clearInterval(typeId) }, 55)
     const phaseId = setTimeout(() => {
       setPhase(2)
-      try { sessionStorage.setItem('maia_animation_played', '1') } catch { /* ignore */ }
+      try { sessionStorage.setItem('maia_animation_done', '1') } catch { /* ignore */ }
     }, 2700)
     return () => { clearInterval(typeId); clearTimeout(phaseId) }
   }, [])
@@ -521,14 +530,18 @@ export default function Home() {
     if (key === 'staff')     { setView('homeowner-form'); return }
   }
 
+  function portalUrl(role: MatchedRole): string {
+    if (role.type === 'staff')  return '/admin'
+    if (role.type === 'owner')  return role.owner_id > 0 ? `/my-account?id=${role.owner_id}&assoc=${role.association_code}` : '/my-account'
+    if (role.type === 'board')  return role.board_member_id ? `/board?id=${role.board_member_id}&assoc=${role.association_code}` : '/board'
+    if (role.type === 'tenant') return `/my-account?assoc=${role.association_code}`
+    return '/'
+  }
+
   function navigateToPortal(role: MatchedRole) {
     try { sessionStorage.setItem('maia_persona', JSON.stringify(role)) } catch { /* ignore */ }
-    // Hard navigation ensures a fresh HTTP request with the new cookie.
-    // Prefer ?return= URL (set by middleware) so the user lands exactly where they were headed.
-    if (role.type === 'staff')  { window.location.href = returnUrl ?? '/admin'; return }
-    if (role.type === 'owner')  { window.location.href = returnUrl ?? `/my-account?id=${role.owner_id}&assoc=${role.association_code}`; return }
-    if (role.type === 'board')  { window.location.href = returnUrl ?? `/board?id=${role.board_member_id}&assoc=${role.association_code}`; return }
-    if (role.type === 'tenant') { window.location.href = returnUrl ?? `/my-account?assoc=${role.association_code}`; return }
+    // replace() avoids adding to history so the back button won't loop back to the homepage
+    window.location.replace(returnUrl ?? portalUrl(role))
   }
 
   function routeToRole(role: MatchedRole) {
@@ -908,51 +921,59 @@ export default function Home() {
                 {/* ── HOME ─────────────────────────────────────────────── */}
                 {view === 'home' && (
                   <>
-                    {/* Quick access saved persona */}
-                    {savedPersona && (
-                      <div className="mb-4 flex items-center justify-between gap-3 px-3 py-2.5 rounded-[3px]" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                        <div className="min-w-0">
-                          <div className="text-[0.56rem] font-medium uppercase tracking-[0.1em] text-[#9ca3af] [font-family:var(--font-mono)] mb-0.5">Quick Access</div>
-                          <div className="text-sm font-semibold text-white leading-snug truncate">
-                            {savedPersona.type === 'staff' && 'PMI Staff Dashboard'}
-                            {savedPersona.type === 'owner' && `Unit Owner — ${savedPersona.association_name}`}
-                            {savedPersona.type === 'board' && `Board Member — ${savedPersona.association_name}`}
-                            {savedPersona.type === 'tenant' && `Tenant — ${savedPersona.association_name}`}
+                    {/* Returning user welcome card */}
+                    {savedPersona && (() => {
+                      const firstName = (sessionContact || '').split(' ')[0] || null
+                      const subtitle =
+                        savedPersona.type === 'staff'  ? 'Ready to access your PMI Staff Dashboard?' :
+                        savedPersona.type === 'owner'  ? `Your ${savedPersona.association_name} account is ready.` :
+                        savedPersona.type === 'board'  ? `Your board portal for ${savedPersona.association_name} is ready.` :
+                        `Your ${savedPersona.association_name} portal is ready.`
+                      return (
+                        <div className="mb-4 rounded-[4px] overflow-hidden maia-fade" style={{ background: 'linear-gradient(135deg, rgba(242,106,27,0.10) 0%, rgba(242,106,27,0.04) 100%)', border: '1px solid rgba(242,106,27,0.22)' }}>
+                          <div className="px-4 py-4">
+                            <div className="text-[0.55rem] font-medium uppercase tracking-[0.15em] text-[#f26a1b] [font-family:var(--font-mono)] mb-1">
+                              {hasSession ? 'Welcome back' : 'Quick Access'}
+                            </div>
+                            <div className="text-[1.1rem] font-light text-white [font-family:var(--font-display)] leading-snug mb-1">
+                              {firstName ? `${firstName}! 👋` : (hasSession ? 'Good to see you! 👋' : (
+                                savedPersona.type === 'staff'  ? 'PMI Staff Dashboard' :
+                                savedPersona.type === 'owner'  ? `Unit Owner — ${savedPersona.association_name}` :
+                                savedPersona.type === 'board'  ? `Board — ${savedPersona.association_name}` :
+                                `Tenant — ${savedPersona.association_name}`
+                              ))}
+                            </div>
+                            {hasSession && (
+                              <div className="text-[0.72rem] text-[#9ca3af] mb-3 leading-snug">{subtitle}</div>
+                            )}
+                            <div className="flex items-center gap-3 mt-2">
+                              <button
+                                onClick={() => {
+                                  if (hasSession) {
+                                    window.location.replace(returnUrl ?? portalUrl(savedPersona))
+                                  } else {
+                                    routeToRole(savedPersona)
+                                  }
+                                }}
+                                className="bg-[#f26a1b] hover:bg-[#f58140] text-white [font-family:var(--font-mono)] text-[0.6rem] uppercase tracking-[0.08em] px-4 py-2 rounded-[2px] transition-colors"
+                              >
+                                Continue →
+                              </button>
+                              <button
+                                onClick={() => {
+                                  try { sessionStorage.removeItem('maia_persona') } catch { /* ignore */ }
+                                  setSavedPersona(null); setHasSession(false); setSessionContact('')
+                                  void fetch('/api/auth/check-session', { method: 'DELETE' })
+                                }}
+                                className="text-[0.68rem] text-[#6b7280] hover:text-[#9ca3af] [font-family:var(--font-mono)] transition-colors"
+                              >
+                                Not {firstName || 'you'}?
+                              </button>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <button
-                            onClick={() => {
-                              if (hasSession) {
-                                // Active cookie — go straight to portal without re-verifying
-                                const dest = returnUrl
-                                  ?? (savedPersona.type === 'staff'  ? '/admin'
-                                    : savedPersona.type === 'owner'  ? `/my-account?id=${(savedPersona as Extract<MatchedRole,{type:'owner'}>).owner_id}&assoc=${(savedPersona as Extract<MatchedRole,{type:'owner'}>).association_code}`
-                                    : savedPersona.type === 'board'  ? `/board?id=${(savedPersona as Extract<MatchedRole,{type:'board'}>).board_member_id}&assoc=${(savedPersona as Extract<MatchedRole,{type:'board'}>).association_code}`
-                                    : `/my-account?assoc=${(savedPersona as Extract<MatchedRole,{type:'tenant'}>).association_code}`)
-                                window.location.href = dest
-                              } else {
-                                routeToRole(savedPersona)
-                              }
-                            }}
-                            className="bg-[#f26a1b] hover:bg-[#f58140] text-white [font-family:var(--font-mono)] text-[0.58rem] uppercase tracking-[0.08em] px-3 py-1.5 rounded-[2px] transition-colors"
-                          >
-                            Continue
-                          </button>
-                          <button
-                            onClick={() => {
-                              try { sessionStorage.removeItem('maia_persona') } catch { /* ignore */ }
-                              setSavedPersona(null)
-                              setHasSession(false)
-                              void fetch('/api/auth/check-session', { method: 'DELETE' })
-                            }}
-                            className="text-[0.58rem] text-[#6b7280] hover:text-white [font-family:var(--font-mono)] uppercase tracking-[0.08em] transition-colors"
-                          >
-                            Not you?
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                      )
+                    })()}
 
                     {/* Greeting bubble */}
                     <div className={`flex gap-2.5 mb-5 ${isRtl ? 'flex-row-reverse' : ''}`}>
