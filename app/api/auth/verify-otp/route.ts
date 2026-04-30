@@ -3,6 +3,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { makeSession, signSession, SESSION_COOKIE, COOKIE_MAX_AGE } from '@/lib/session'
 import type { MatchedRole } from '@/app/api/homeowner-lookup/route'
 
+function logLogin(data: Record<string, unknown>) {
+  void supabaseAdmin.from('login_history').insert(data)
+}
+
 export async function POST(req: NextRequest) {
   const { identifier, code, persona, roleData } = await req.json()
 
@@ -10,10 +14,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Missing fields' }, { status: 400 })
   }
 
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  const ua = req.headers.get('user-agent') ?? ''
+
   // Find most recent unexpired, unverified OTP for this identifier
   const { data: otpRows } = await supabaseAdmin
     .from('otp_verifications')
-    .select('id, otp_code, expires_at, attempts, role_data')
+    .select('id, otp_code, expires_at, attempts, role_data, method')
     .eq('identifier', identifier.trim())
     .is('verified_at', null)
     .gt('expires_at', new Date().toISOString())
@@ -34,10 +41,12 @@ export async function POST(req: NextRequest) {
 
   // Max 5 attempts
   if (otp.attempts >= 5) {
+    logLogin({ event: 'otp_failed', identifier: identifier.trim(), persona, method: otp.method, ip_address: ip, user_agent: ua, success: false, failure_reason: 'max_attempts', role_data: otp.role_data ?? roleData ?? null })
     return NextResponse.json({ ok: false, error: 'Too many incorrect attempts. Please request a new code.' }, { status: 429 })
   }
 
   if (otp.otp_code !== code.trim()) {
+    logLogin({ event: 'otp_failed', identifier: identifier.trim(), persona, method: otp.method, ip_address: ip, user_agent: ua, success: false, failure_reason: 'wrong_code', role_data: otp.role_data ?? roleData ?? null })
     return NextResponse.json({ ok: false, error: 'Incorrect code. Please try again.' }, { status: 400 })
   }
 
@@ -63,6 +72,8 @@ export async function POST(req: NextRequest) {
 
   const session  = makeSession({ userId, persona: sessionPersona, associationCode: assocCode, displayName })
   const token    = signSession(session)
+
+  logLogin({ event: 'otp_verified', identifier: identifier.trim(), persona: sessionPersona, association_code: assocCode || null, association_name: displayName || null, method: otp.method, ip_address: ip, user_agent: ua, success: true, role_data: role })
 
   const res = NextResponse.json({ ok: true, role })
   res.cookies.set(SESSION_COOKIE, token, {

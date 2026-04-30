@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import SiteHeader from '@/components/SiteHeader'
+import AdminNav from '../components/AdminNav'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import CommunicationsDashboard from './components/CommunicationsDashboard'
 
@@ -44,21 +44,8 @@ export default async function CommunicationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <SiteHeader subtitle="COMMUNICATIONS">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/admin"
-            className="text-white/70 hover:text-white [font-family:var(--font-mono)] text-[0.6rem] uppercase tracking-[0.08em] transition-colors"
-          >
-            ← Owners
-          </Link>
-          <Link
-            href="/admin/communications"
-            className="text-white border border-white/30 [font-family:var(--font-mono)] text-[0.6rem] uppercase tracking-[0.08em] px-3 py-1.5 rounded-[2px]"
-          >
-            Communications
-          </Link>
-        </div>
+      <SiteHeader subtitle="STAFF DASHBOARD">
+        <AdminNav />
       </SiteHeader>
 
       <main className="max-w-screen-xl mx-auto px-6 py-6">

@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import SiteHeader from '@/components/SiteHeader'
+import AdminNav from '../components/AdminNav'
 import RegistrationsDashboard from './components/RegistrationsDashboard'
 
 export const dynamic = 'force-dynamic'
@@ -27,7 +28,9 @@ export default async function RegistrationsPage() {
         <span className="assoc-topbar-l">WHATSAPP &amp; SMS 24/7 · +1 (786) 686-3223</span>
         <span className="assoc-topbar-r">305.900.5077</span>
       </div>
-      <SiteHeader subtitle="ADMIN · REGISTRATIONS" />
+      <SiteHeader subtitle="STAFF DASHBOARD">
+        <AdminNav />
+      </SiteHeader>
 
       <div style={{ padding: '1.5rem', maxWidth: '1100px', margin: '0 auto' }}>
 

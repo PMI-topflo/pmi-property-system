@@ -1393,7 +1393,6 @@ export default function Home() {
                   const role2fa = pending2FA  // capture non-null value for callbacks
                   return (
                     <div className="maia-fade">
-                      <BackBtn onClick={() => { setPending2FA(null); setView('homeowner-form') }} />
                       <TwoFactorAuth
                         role={role2fa}
                         email={hwEmail}

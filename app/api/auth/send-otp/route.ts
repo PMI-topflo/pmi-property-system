@@ -69,5 +69,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Failed to send code. Please try another method.' }, { status: 500 })
   }
 
+  void supabaseAdmin.from('login_history').insert({
+    event: 'otp_sent', identifier: identifier.trim(), persona: persona ?? 'homeowner',
+    method, ip_address: ip, success: true, role_data: roleData ?? null,
+    association_code: (roleData as { association_code?: string } | null)?.association_code ?? null,
+    association_name: (roleData as { association_name?: string } | null)?.association_name ?? null,
+  })
+
   return NextResponse.json({ ok: true })
 }
