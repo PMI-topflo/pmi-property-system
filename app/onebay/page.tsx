@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageOnebay() {
   return (
@@ -11,6 +12,8 @@ export default function PageOnebay() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · One Bay Harbor Condominium Association, Inc." />
+
+      <AssociationPortalGate assocCode="ONE" assocName="One Bay Harbor Condominium Association">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageOnebay() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

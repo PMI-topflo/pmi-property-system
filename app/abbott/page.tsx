@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageAbbott() {
   return (
@@ -11,6 +12,8 @@ export default function PageAbbott() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · 7636 Abbott Avenue Condominium Association, Inc." />
+
+      <AssociationPortalGate assocCode="ABBOTT" assocName="7636 Abbott Avenue Condominium Association">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageAbbott() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

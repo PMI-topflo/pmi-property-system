@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageKimgarden() {
   return (
@@ -11,6 +12,8 @@ export default function PageKimgarden() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Kimberly Garden Apartments Condominium, Inc." />
+
+      <AssociationPortalGate assocCode="KGA" assocName="Kimberly Garden Apartments Condominium">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageKimgarden() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

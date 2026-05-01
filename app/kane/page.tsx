@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageKane() {
   return (
@@ -11,6 +12,8 @@ export default function PageKane() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · 1080-1090 Kane Concourse Condominium Association, Inc." />
+
+      <AssociationPortalGate assocCode="KANE" assocName="1080-1090 Kane Concourse Condominium">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageKane() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

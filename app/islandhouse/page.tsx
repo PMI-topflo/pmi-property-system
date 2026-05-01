@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageIslandhouse() {
   return (
@@ -11,6 +12,8 @@ export default function PageIslandhouse() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Island House North Condominium Association, Inc." />
+
+      <AssociationPortalGate assocCode="ISLAND" assocName="Island House North Condominium Association">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageIslandhouse() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

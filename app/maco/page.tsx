@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageMaco() {
   return (
@@ -11,6 +12,8 @@ export default function PageMaco() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Maco Commerce Center Condominium Association, Inc." />
+
+      <AssociationPortalGate assocCode="MACO" assocName="Maco Commerce Center Condominium">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageMaco() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

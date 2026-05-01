@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageDelvista() {
   return (
@@ -11,6 +12,8 @@ export default function PageDelvista() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Delvista Condominium Association, Inc." />
+
+      <AssociationPortalGate assocCode="DELA" assocName="Delvista Condominium Association">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageDelvista() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

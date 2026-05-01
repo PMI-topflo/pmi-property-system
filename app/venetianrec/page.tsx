@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageVenetianrec() {
   return (
@@ -11,6 +12,8 @@ export default function PageVenetianrec() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Venetian Park Recreation Association, Inc." />
+
+      <AssociationPortalGate assocCode="VPREC" assocName="Venetian Park Recreation Association">
 
       {/* Quick Actions */}
       <section className="section">
@@ -240,6 +243,8 @@ export default function PageVenetianrec() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

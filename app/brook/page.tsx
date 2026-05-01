@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageBrook() {
   return (
@@ -11,6 +12,8 @@ export default function PageBrook() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Brook Haven of Boca Raton Property Owners Association, Inc." />
+
+      <AssociationPortalGate assocCode="BHB" assocName="Brook Haven of Boca Raton">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageBrook() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

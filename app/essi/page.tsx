@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageEssi() {
   return (
@@ -11,6 +12,8 @@ export default function PageEssi() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Essington Industrial Condominium, Inc." />
+
+      <AssociationPortalGate assocCode="ESSI" assocName="Essington Industrial Condominium">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageEssi() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageSerenityiv() {
   return (
@@ -11,6 +12,8 @@ export default function PageSerenityiv() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Serenity Place IV" />
+
+      <AssociationPortalGate assocCode="SP" assocName="Serenity Place IV">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageSerenityiv() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

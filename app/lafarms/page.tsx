@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageLafarms() {
   return (
@@ -11,6 +12,8 @@ export default function PageLafarms() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Lafayette Arms Inc." />
+
+      <AssociationPortalGate assocCode="LFA" assocName="Lafayette Arms">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageLafarms() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

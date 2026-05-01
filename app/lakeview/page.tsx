@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageLakeview() {
   return (
@@ -11,6 +12,8 @@ export default function PageLakeview() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Lakeview of the California Club Homeowners Association, Inc." />
+
+      <AssociationPortalGate assocCode="LCLUB" assocName="Lakeview of the California Club">
 
       {/* Quick Actions */}
       <section className="section">
@@ -240,6 +243,8 @@ export default function PageLakeview() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

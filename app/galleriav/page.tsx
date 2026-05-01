@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageGalleriav() {
   return (
@@ -11,6 +12,8 @@ export default function PageGalleriav() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Galleria Village Homeowners Association, Inc." />
+
+      <AssociationPortalGate assocCode="GVH" assocName="Galleria Village Homeowners Association">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageGalleriav() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }

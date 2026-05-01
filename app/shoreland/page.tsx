@@ -1,4 +1,5 @@
 import SiteHeader from '@/components/SiteHeader'
+import AssociationPortalGate from '@/components/AssociationPortalGate'
 
 export default function PageShoreland() {
   return (
@@ -11,6 +12,8 @@ export default function PageShoreland() {
       </div>
 
       <SiteHeader subtitle="ASSOCIATION PORTAL · Shoreland Estates Condominium Association, Inc." />
+
+      <AssociationPortalGate assocCode="SHORE" assocName="Shoreland Estates Condominium">
 
       {/* Quick Actions */}
       <section className="section">
@@ -267,6 +270,8 @@ export default function PageShoreland() {
         </div>
       </div>
 
+
+      </AssociationPortalGate>
     </main>
   )
 }
