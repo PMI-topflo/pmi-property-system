@@ -6,7 +6,7 @@ import { useState } from 'react'
 
 interface Conversation {
   id: string
-  session_id: string
+  session_id: string | null
   persona: string | null
   language: string | null
   association_code: string | null
@@ -224,7 +224,7 @@ function ConversationsTab({ conversations, staff }: { conversations: Conversatio
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm text-gray-900">
-                      {c.contact_name ?? c.contact_phone ?? c.session_id.slice(0, 12)}
+                      {c.contact_name ?? c.contact_phone ?? c.session_id?.slice(0, 12) ?? '—'}
                     </span>
                     {c.contact_phone && <span className="text-xs text-gray-400">{c.contact_phone}</span>}
                     {statusBadge(c.status)}
