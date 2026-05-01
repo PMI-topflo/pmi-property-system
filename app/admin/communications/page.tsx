@@ -11,7 +11,7 @@ async function getData() {
   const [convRes, emailRes, ticketRes, staffRes, cmdRes] = await Promise.all([
     supabaseAdmin
       .from('general_conversations')
-      .select('id, session_id, persona, language, association_code, topic, status, channel, contact_name, contact_phone, contact_email, assigned_to, handled_by, summary, created_at, updated_at, messages')
+      .select('id, session_id, persona, language, association_code, topic, status, channel, contact_name, contact_phone, contact_email, assigned_to, handled_by, summary, message, response, subject, sender_email, created_at, updated_at, messages')
       .order('updated_at', { ascending: false })
       .limit(100),
     supabaseAdmin

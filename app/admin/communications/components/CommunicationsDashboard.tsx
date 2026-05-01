@@ -19,6 +19,10 @@ interface Conversation {
   assigned_to: string | null
   handled_by: string | null
   summary: string | null
+  message: string | null
+  response: string | null
+  subject: string | null
+  sender_email: string | null
   created_at: string
   updated_at: string
   messages: Array<{ role: string; content: string }> | null
@@ -237,7 +241,18 @@ function ConversationsTab({ conversations, staff }: { conversations: Conversatio
                       <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px]">{c.association_code}</span>
                     )}
                   </div>
-                  {c.summary && <p className="text-xs text-gray-500 mt-1 truncate">{c.summary}</p>}
+                  <p className="text-xs mt-1 truncate">
+                    {(() => {
+                      const preview =
+                        c.summary?.trim() ||
+                        c.message?.trim() ||
+                        c.messages?.find(m => m.role === 'user')?.content?.trim() ||
+                        null
+                      return preview
+                        ? <span className="text-gray-500">{preview}</span>
+                        : <span className="text-gray-300 italic">No message content available</span>
+                    })()}
+                  </p>
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-xs text-gray-400">{fmtDate(c.updated_at)}</div>

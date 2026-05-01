@@ -1339,6 +1339,8 @@ async function logConversation(phone: string, inbound: string, outbound: string,
     channel:       ctx.channel,
     topic:         ctx.persona,
     summary:       `IN: ${inbound.slice(0, 100)} | OUT: ${outbound.slice(0, 100)}`,
+    message:       inbound,
+    response:      outbound,
     messages:      [
       { role: 'user',      content: inbound  },
       { role: 'assistant', content: outbound },
