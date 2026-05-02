@@ -83,13 +83,10 @@ The core AI automation lives in `lib/maia-command-processor.ts` (~1000 lines). W
 
 ## Environment Variables
 
-```
-SUPABASE_URL, SUPABASE_SERVICE_KEY
-MAIA_SESSION_SECRET
-RESEND_API_KEY
-GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN
-TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE, TWILIO_WHATSAPP_SID
-ANTHROPIC_API_KEY
-STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-```
+All required variables are documented with descriptions in `.env.example`. Key points:
+
+- **`SUPABASE_SERVICE_KEY`** is the canonical name for the Supabase service role secret throughout this codebase (`lib/supabase-admin.ts`). Do not use `SUPABASE_SERVICE_ROLE_KEY`.
+- **`NEXT_PUBLIC_APP_URL`** is the canonical public base URL (e.g. `https://www.pmitop.com`). Do not use `NEXT_PUBLIC_URL`.
+- **`TWILIO_PHONE_NUMBER`** is the SMS sender; **`TWILIO_WHATSAPP_NUMBER`** is the WhatsApp-enabled number. These may be different values.
+- **`CRON_SECRET`** is set automatically by Vercel for scheduled cron jobs — add it to your local `.env.local` for manual cron testing.
+- **`INTERNAL_API_SECRET`** guards `/api/trigger-applycheck` from external calls; it is passed as the `x-internal-secret` header by the Stripe webhook handler.
