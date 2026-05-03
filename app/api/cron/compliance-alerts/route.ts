@@ -58,7 +58,7 @@ export async function GET(req: Request) {
   const newAlerts: AlertRow[] = [];
 
   // ---- 1. Leases ----
-  const { data: leases } = await supabase
+  const { data: leases } = await getSupabase()
     .from('unit_leases')
     .select('id, account_number, association_code, tenant_name, lease_end_date')
     .not('lease_end_date', 'is', null)
@@ -83,7 +83,7 @@ export async function GET(req: Request) {
   }
 
   // ---- 2. Insurance ----
-  const { data: insurance } = await supabase
+  const { data: insurance } = await getSupabase()
     .from('unit_insurance')
     .select('id, account_number, association_code, carrier, expiration_date')
     .not('expiration_date', 'is', null);
@@ -107,7 +107,7 @@ export async function GET(req: Request) {
   }
 
   // ---- 3. Lauderhill Certificate of Use ----
-  const { data: cous } = await supabase
+  const { data: cous } = await getSupabase()
     .from('unit_certificate_of_use')
     .select('id, account_number, association_code, city, expiration_date')
     .not('expiration_date', 'is', null);
@@ -131,7 +131,7 @@ export async function GET(req: Request) {
   }
 
   // ---- 4. Violations ----
-  const { data: violations } = await supabase
+  const { data: violations } = await getSupabase()
     .from('unit_violations')
     .select('id, account_number, association_code, violation_type, resolution_due_date, status')
     .in('status', ['open', 'in_progress', 'escalated'])
@@ -157,7 +157,7 @@ export async function GET(req: Request) {
 
   // ---- Dedupe & insert ----
   // Skip alerts that already exist and are unresolved (same reference_id + alert_type)
-  const { data: existing } = await supabase
+  const { data: existing } = await getSupabase()
     .from('compliance_alerts')
     .select('reference_id, reference_table, alert_type')
     .is('resolved_at', null);
@@ -183,7 +183,7 @@ export async function GET(req: Request) {
   );
   if (toResolve.length) {
     // Mark as resolved; need IDs — re-query
-    const { data: resolveTargets } = await supabase
+    const { data: resolveTargets } = await getSupabase()
       .from('compliance_alerts')
       .select('id, reference_id, reference_table, alert_type')
       .is('resolved_at', null);
@@ -191,7 +191,7 @@ export async function GET(req: Request) {
       .filter(r => !activeKeys.has(`${r.reference_table}:${r.reference_id}:${r.alert_type}`))
       .map(r => r.id);
     if (resolveIds.length) {
-      await supabase
+      await getSupabase()
         .from('compliance_alerts')
         .update({ resolved_at: new Date().toISOString() })
         .in('id', resolveIds);

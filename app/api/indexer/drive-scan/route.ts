@@ -153,7 +153,7 @@ async function listPdfsInFolder(folderId: string, drive: ReturnType<typeof drive
 // Match unit_number → account_number using the homeowners table
 async function resolveAccountNumber(associationCode: string, unitNumber: string | null) {
   if (!unitNumber) return null;
-  const { data } = await supabase
+  const { data } = await getSupabase()
     .from('homeowners')
     .select('account_number')
     .eq('association_code', associationCode)
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
   // Resolve folder ID from registry if not provided
   let folderId = driveFolderId;
   if (!folderId) {
-    const { data } = await supabase
+    const { data } = await getSupabase()
       .from('unit_drive_folders')
       .select('drive_folder_id')
       .eq('association_code', associationCode)
@@ -264,7 +264,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Start log
-  const { data: logRow } = await supabase
+  const { data: logRow } = await getSupabase()
     .from('drive_indexer_log')
     .insert({
       association_code: associationCode,
