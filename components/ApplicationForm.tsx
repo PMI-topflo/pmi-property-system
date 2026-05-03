@@ -22,7 +22,7 @@ const translations = {
   en: {
     title: "Resident Application",
     subtitle: "PMI Top Florida Properties",
-    steps: ["Type", "Applicants", "Documents", "Payment"],
+    steps: ["Lease", "Type", "Applicants", "Documents", "Payment"],
     selectAssociation: "Select Association",
     associationPlaceholder: "Choose your association…",
     loadingAssociations: "Loading associations…",
@@ -85,11 +85,21 @@ const translations = {
     selectAssocPlaceholder: "Please select an association.",
     payingNote: "Redirecting to secure checkout…",
     uploadError: "Upload failed — please try again.",
+    uploadLease: "Upload Your Lease or Purchase Agreement",
+    uploadLeaseHint: "We'll read it to identify your property automatically — no dropdown needed.",
+    reading: "Reading your document…",
+    docFound: "Property Identified",
+    assocUnknown: "Association not recognized — please contact us before applying.",
+    confirmDetails: "Confirm & Continue",
+    uploadAgain: "Upload a different document",
+    verifyNote: "Verify these details match your document before continuing.",
+    leaseRequired: "Please upload your lease or purchase agreement to continue.",
+    parseError: "We couldn't read your document clearly. Please upload a higher-quality scan or photo and try again.",
   },
   es: {
     title: "Solicitud de Residente",
     subtitle: "PMI Top Florida Properties",
-    steps: ["Tipo", "Solicitantes", "Documentos", "Pago"],
+    steps: ["Contrato", "Tipo", "Solicitantes", "Documentos", "Pago"],
     selectAssociation: "Seleccionar Asociación",
     associationPlaceholder: "Elija su asociación…",
     loadingAssociations: "Cargando asociaciones…",
@@ -152,11 +162,21 @@ const translations = {
     selectAssocPlaceholder: "Por favor seleccione una asociación.",
     payingNote: "Redirigiendo al pago seguro…",
     uploadError: "Error al subir — inténtelo de nuevo.",
+    uploadLease: "Suba su Contrato de Arrendamiento o Compraventa",
+    uploadLeaseHint: "Leeremos el documento para identificar su propiedad automáticamente.",
+    reading: "Leyendo su documento…",
+    docFound: "Propiedad Identificada",
+    assocUnknown: "Asociación no reconocida — contáctenos antes de aplicar.",
+    confirmDetails: "Confirmar y Continuar",
+    uploadAgain: "Subir un documento diferente",
+    verifyNote: "Verifique que estos datos coincidan con su contrato antes de continuar.",
+    leaseRequired: "Por favor suba su contrato para continuar.",
+    parseError: "No pudimos leer su documento claramente. Por favor suba una copia más nítida e inténtelo de nuevo.",
   },
   pt: {
     title: "Solicitação de Residente",
     subtitle: "PMI Top Florida Properties",
-    steps: ["Tipo", "Solicitantes", "Documentos", "Pagamento"],
+    steps: ["Contrato", "Tipo", "Solicitantes", "Documentos", "Pagamento"],
     selectAssociation: "Selecionar Associação",
     associationPlaceholder: "Escolha sua associação…",
     loadingAssociations: "Carregando associações…",
@@ -219,11 +239,21 @@ const translations = {
     selectAssocPlaceholder: "Por favor selecione uma associação.",
     payingNote: "Redirecionando para pagamento seguro…",
     uploadError: "Falha no envio — tente novamente.",
+    uploadLease: "Envie seu Contrato de Aluguel ou de Compra",
+    uploadLeaseHint: "Vamos ler o documento para identificar sua propriedade automaticamente.",
+    reading: "Lendo seu documento…",
+    docFound: "Imóvel Identificado",
+    assocUnknown: "Associação não reconhecida — entre em contato antes de solicitar.",
+    confirmDetails: "Confirmar e Continuar",
+    uploadAgain: "Enviar documento diferente",
+    verifyNote: "Verifique se estes dados correspondem ao seu contrato antes de continuar.",
+    leaseRequired: "Por favor envie seu contrato para continuar.",
+    parseError: "Não conseguimos ler seu documento claramente. Por favor envie uma cópia mais nítida e tente novamente.",
   },
   fr: {
     title: "Demande de Résidence",
     subtitle: "PMI Top Florida Properties",
-    steps: ["Type", "Demandeurs", "Documents", "Paiement"],
+    steps: ["Contrat", "Type", "Demandeurs", "Documents", "Paiement"],
     selectAssociation: "Sélectionner l'Association",
     associationPlaceholder: "Choisissez votre association…",
     loadingAssociations: "Chargement des associations…",
@@ -286,11 +316,21 @@ const translations = {
     selectAssocPlaceholder: "Veuillez sélectionner une association.",
     payingNote: "Redirection vers le paiement sécurisé…",
     uploadError: "Échec du téléchargement — veuillez réessayer.",
+    uploadLease: "Téléchargez votre Bail ou Acte de Vente",
+    uploadLeaseHint: "Nous lirons le document pour identifier votre bien automatiquement.",
+    reading: "Lecture de votre document…",
+    docFound: "Bien Identifié",
+    assocUnknown: "Association non reconnue — contactez-nous avant de postuler.",
+    confirmDetails: "Confirmer et Continuer",
+    uploadAgain: "Télécharger un autre document",
+    verifyNote: "Vérifiez que ces informations correspondent à votre document avant de continuer.",
+    leaseRequired: "Veuillez télécharger votre bail pour continuer.",
+    parseError: "Nous n'avons pas pu lire votre document clairement. Veuillez télécharger une copie plus nette et réessayer.",
   },
   he: {
     title: "בקשת מגורים",
     subtitle: "PMI Top Florida Properties",
-    steps: ["סוג", "מגישים", "מסמכים", "תשלום"],
+    steps: ["חוזה", "סוג", "מגישים", "מסמכים", "תשלום"],
     selectAssociation: "בחר עמותה",
     associationPlaceholder: "בחר את העמותה שלך…",
     loadingAssociations: "טוען עמותות…",
@@ -353,11 +393,21 @@ const translations = {
     selectAssocPlaceholder: "אנא בחר עמותה.",
     payingNote: "מעביר לתשלום מאובטח…",
     uploadError: "ההעלאה נכשלה — נסה שוב.",
+    uploadLease: "העלה חוזה שכירות או הסכם רכישה",
+    uploadLeaseHint: "נקרא את המסמך ונזהה את הנכס שלך אוטומטית.",
+    reading: "קורא את המסמך שלך…",
+    docFound: "נכס זוהה",
+    assocUnknown: "העמותה לא זוהתה — צור קשר לפני הגשת הבקשה.",
+    confirmDetails: "אשר והמשך",
+    uploadAgain: "העלה מסמך אחר",
+    verifyNote: "ודא שפרטים אלה תואמים את המסמך שלך לפני המשך.",
+    leaseRequired: "אנא העלה את החוזה כדי להמשיך.",
+    parseError: "לא הצלחנו לקרוא את המסמך בבירור. אנא העלה עותק ברור יותר ונסה שוב.",
   },
   ru: {
     title: "Заявка на проживание",
     subtitle: "PMI Top Florida Properties",
-    steps: ["Тип", "Заявители", "Документы", "Оплата"],
+    steps: ["Договор", "Тип", "Заявители", "Документы", "Оплата"],
     selectAssociation: "Выбрать ассоциацию",
     associationPlaceholder: "Выберите вашу ассоциацию…",
     loadingAssociations: "Загрузка ассоциаций…",
@@ -420,6 +470,16 @@ const translations = {
     selectAssocPlaceholder: "Пожалуйста, выберите ассоциацию.",
     payingNote: "Переход к безопасной оплате…",
     uploadError: "Ошибка загрузки — попробуйте ещё раз.",
+    uploadLease: "Загрузите договор аренды или купли-продажи",
+    uploadLeaseHint: "Мы прочитаем документ и автоматически определим вашу недвижимость.",
+    reading: "Читаем ваш документ…",
+    docFound: "Объект найден",
+    assocUnknown: "Ассоциация не распознана — свяжитесь с нами перед подачей заявки.",
+    confirmDetails: "Подтвердить и продолжить",
+    uploadAgain: "Загрузить другой документ",
+    verifyNote: "Убедитесь, что эти данные соответствуют вашему документу, прежде чем продолжить.",
+    leaseRequired: "Пожалуйста, загрузите договор для продолжения.",
+    parseError: "Нам не удалось прочитать ваш документ. Пожалуйста, загрузите более чёткую копию и попробуйте снова.",
   },
 };
 
@@ -593,12 +653,18 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
   const t                             = translations[lang as keyof typeof translations];
   const [step, setStep]               = useState(0);
   const [association, setAssociation] = useState(preselectedAssociation || "");
-  const [assocSearch, setAssocSearch] = useState(preselectedAssociation || "");
-  const [assocOpen, setAssocOpen]     = useState(false);
-  const [associations, setAssociations] = useState<{ name: string; code: string; address: string; city: string; state: string; zip: string }[]>([]);
   const [assocCode, setAssocCode]     = useState("");
   const [assocUnits, setAssocUnits]   = useState<string[]>([]);
-  const [assocLoading, setAssocLoading] = useState(true);
+  // Lease upload state
+  type LeaseData = {
+    extracted: { association: string | null; address: string | null; unit: string | null; moveIn: string | null; tenants: string[] };
+    matched: { code: string; name: string; address: string } | null;
+    storagePath: string;
+  };
+  const [leaseUploading, setLeaseUploading] = useState(false);
+  const [leaseData, setLeaseData]     = useState<LeaseData | null>(null);
+  const [leaseConfirmed, setLeaseConfirmed] = useState(!!preselectedAssociation);
+  const [leaseParseError, setLeaseParseError] = useState("");
   const [appType, setAppType]         = useState("");
   const [coupleOption, setCoupleOption] = useState("");
   const [applicants, setApplicants]   = useState<Record<string, string>[]>([{}]);
@@ -617,30 +683,63 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
   const isCouple     = appType === "couple";
   const hasCert      = coupleOption === "yes";
   const isCommercial = appType === "commercial";
-  const selectedAssoc = associations.find((a) => a.code === assocCode) ?? null;
 
-  // ── Load associations from the associations table (via API route) ─────────
-  useEffect(() => {
-    async function fetchAssociations() {
-      setAssocLoading(true);
-      try {
-        const res = await fetch("/api/associations");
-        if (res.ok) {
-          const data: { association_name: string; association_code: string; principal_address?: string; city?: string; state?: string; zip?: string }[] = await res.json();
-          setAssociations(data.map((r) => ({
-            name:    r.association_name,
-            code:    r.association_code,
-            address: r.principal_address ?? "",
-            city:    r.city ?? "",
-            state:   r.state ?? "",
-            zip:     r.zip ?? "",
-          })));
-        }
-      } catch { /* leave list empty — user can still type */ }
-      setAssocLoading(false);
+  // ── Upload lease to parse-lease API ──────────────────────────────────────
+  const handleLeaseUpload = async (file: File) => {
+    setLeaseParseError("");
+    setLeaseData(null);
+    setLeaseUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("lease", file);
+      const res = await fetch("/api/apply/parse-lease", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok) {
+        setLeaseParseError(json.error ?? t.parseError);
+        return;
+      }
+      setLeaseData(json as LeaseData);
+    } catch {
+      setLeaseParseError(t.parseError);
+    } finally {
+      setLeaseUploading(false);
     }
-    fetchAssociations();
-  }, []);
+  };
+
+  // ── Confirm lease data and pre-populate form ──────────────────────────────
+  const confirmLease = () => {
+    if (!leaseData) return;
+    const name = leaseData.matched?.name ?? leaseData.extracted.association ?? "";
+    const code = leaseData.matched?.code ?? "";
+    setAssociation(name);
+    setAssocCode(code);
+    setLeaseConfirmed(true);
+    // Pre-populate unit + move-in on first applicant
+    const unit    = leaseData.extracted.unit ?? "";
+    const moveIn  = leaseData.extracted.moveIn ?? "";
+    setApplicants((prev) => {
+      const n = [...prev];
+      n[0] = { ...n[0], unitApplying: unit, moveInDate: moveIn };
+      // Pre-populate tenant names if available
+      if (leaseData.extracted.tenants.length > 0) {
+        const parts = leaseData.extracted.tenants[0].trim().split(/\s+/);
+        n[0] = { ...n[0], firstName: parts[0] ?? "", lastName: parts.slice(1).join(" ") };
+        if (leaseData.extracted.tenants[1]) {
+          const p2 = leaseData.extracted.tenants[1].trim().split(/\s+/);
+          n[1] = { ...(n[1] ?? {}), firstName: p2[0] ?? "", lastName: p2.slice(1).join(" ") };
+        }
+      }
+      return n;
+    });
+    // Fetch units for the selected association for validation
+    if (code) {
+      fetch(`/api/associations/units?code=${encodeURIComponent(code)}`)
+        .then((r) => r.json())
+        .then((units: string[]) => setAssocUnits(units))
+        .catch(() => setAssocUnits([]));
+    }
+    setStep(1);
+  };
 
   // ── Pricing ────────────────────────────────────────────────────────────────
   const calcTotal = () => {
@@ -701,11 +800,13 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
   const handleNext = () => {
     setError("");
     if (step === 0) {
-      if (!association)              { setError(t.selectAssocPlaceholder); return; }
-      if (!appType)                  { setError(t.selectType);             return; }
-      if (isCouple && !coupleOption) { setError(t.selectType);             return; }
+      if (!leaseConfirmed) { setError(t.leaseRequired); return; }
     }
-    if (step === 2 && !agreed) { setError(t.consentRequired); return; }
+    if (step === 1) {
+      if (!appType)                  { setError(t.selectType); return; }
+      if (isCouple && !coupleOption) { setError(t.selectType); return; }
+    }
+    if (step === 3 && !agreed) { setError(t.consentRequired); return; }
     setStep((s) => s + 1);
   };
 
@@ -727,6 +828,7 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
         docs_gov_id_url:        docUrls.govId,
         docs_proof_income_url:  docUrls.proofIncome,
         docs_marriage_cert_url: docUrls.marriageCert,
+        docs_lease_url:         leaseData?.storagePath ?? null,
         language:         lang,
         stripe_payment_status: "pending",
       };
@@ -853,104 +955,138 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
 
         <div style={{ padding: "32px 36px 28px" }}>
 
-          {/* ══ STEP 0: Type + Association ══════════════════════════════════ */}
-          {step === 0 && (
+          {/* ══ STEP 0: Upload Lease / Purchase Agreement ═══════════════════ */}
+          {step === 0 && !leaseConfirmed && (
             <div>
-              {/* Association search combobox */}
-              <div style={{ marginBottom: 24 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 7, fontFamily: "monospace" }}>
-                  {t.selectAssociation}
-                </label>
-                {assocLoading ? (
-                  <div style={{ padding: "12px 14px", borderRadius: 3, border: "1px solid #e5e7eb", fontSize: 13, color: "#9ca3af", background: "#fafaf9" }}>
-                    {t.loadingAssociations}
-                  </div>
-                ) : (
-                  <div style={{ position: "relative" }}>
-                    <input
-                      type="text"
-                      value={assocSearch}
-                      placeholder={t.associationPlaceholder}
-                      readOnly={!!preselectedAssociation}
-                      autoComplete="off"
-                      onChange={(e) => {
-                        setAssocSearch(e.target.value);
-                        setAssociation("");
-                        setAssocOpen(true);
-                      }}
-                      onFocus={() => setAssocOpen(true)}
-                      onBlur={() => setTimeout(() => setAssocOpen(false), 160)}
-                      style={{ ...inp, borderColor: association ? "#f26a1b" : "#e5e7eb", cursor: preselectedAssociation ? "default" : "text", paddingRight: 32 }}
-                    />
-                    {/* clear button */}
-                    {assocSearch && !preselectedAssociation && (
-                      <button
-                        onClick={() => { setAssocSearch(""); setAssociation(""); setAssocCode(""); setAssocUnits([]); setAssocOpen(true); }}
-                        style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: 16, lineHeight: 1, padding: 2 }}
-                      >×</button>
-                    )}
-                    {/* dropdown */}
-                    {assocOpen && !preselectedAssociation && (() => {
-                      const q = assocSearch.trim().toLowerCase();
-                      const filtered = (q.length === 0 ? associations : associations.filter((a) =>
-                        a.name.toLowerCase().includes(q) ||
-                        a.address.toLowerCase().includes(q) ||
-                        a.city.toLowerCase().includes(q)
-                      )).slice(0, 12);
-                      return (
-                        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 4, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 50, maxHeight: 280, overflowY: "auto" }}>
-                          {filtered.length === 0 ? (
-                            <div style={{ padding: "12px 14px", fontSize: 13, color: "#9ca3af" }}>No associations found</div>
-                          ) : filtered.map((a) => (
-                            <div
-                              key={a.code}
-                              onMouseDown={() => {
-                                setAssociation(a.name);
-                                setAssocSearch(a.name);
-                                setAssocCode(a.code);
-                                setAssocOpen(false);
-                                fetch(`/api/associations/units?code=${encodeURIComponent(a.code)}`)
-                                  .then((r) => r.json())
-                                  .then((units: string[]) => setAssocUnits(units))
-                                  .catch(() => setAssocUnits([]));
-                              }}
-                              style={{ padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #f9fafb" }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = "#fff7f0")}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                            >
-                              <div style={{ fontSize: 13, fontWeight: 600, color: "#0d0d0d" }}>{a.name}</div>
-                              {(a.address || a.city) && (
-                                <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>
-                                  {[a.address, a.city, a.state, a.zip].filter(Boolean).join(", ")}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
-                {/* Property address confirmation card — matches what appears on lease/purchase agreement */}
-                {selectedAssoc && (
-                  <div style={{ marginTop: 8, padding: "10px 14px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 4 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: "#1a6b3c", textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "monospace", marginBottom: 4 }}>
-                      ✓ Property Confirmed
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6, fontFamily: "monospace" }}>
+                {t.uploadLease}
+              </label>
+              <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 18, lineHeight: 1.55 }}>{t.uploadLeaseHint}</p>
+
+              {/* Parse error — prominent, actionable */}
+              {leaseParseError && (
+                <div style={{ marginBottom: 18, padding: "14px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 4 }}>
+                  <div style={{ fontWeight: 700, color: "#dc2626", fontSize: 13, marginBottom: 4 }}>⚠ Could not read your document</div>
+                  <div style={{ fontSize: 13, color: "#7f1d1d", lineHeight: 1.55 }}>{leaseParseError}</div>
+                  <div style={{ marginTop: 8, fontSize: 12, color: "#dc2626", fontWeight: 600 }}>Please upload a clearer, higher-resolution scan or photo and try again.</div>
+                </div>
+              )}
+
+              {/* Upload drop zone */}
+              {!leaseData && (
+                <div
+                  onClick={() => (document.getElementById("lease-upload") as HTMLInputElement | null)?.click()}
+                  onDragOver={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement).style.borderColor = "#f26a1b"; (e.currentTarget as HTMLElement).style.background = "#fff7f0"; }}
+                  onDragLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = leaseParseError ? "#fca5a5" : "#e5e7eb"; (e.currentTarget as HTMLElement).style.background = leaseParseError ? "#fef2f2" : "#fafaf9"; }}
+                  onDrop={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement).style.borderColor = "#e5e7eb"; (e.currentTarget as HTMLElement).style.background = "#fafaf9"; if (e.dataTransfer.files[0]) handleLeaseUpload(e.dataTransfer.files[0]); }}
+                  style={{ border: `1.5px dashed ${leaseParseError ? "#fca5a5" : "#e5e7eb"}`, borderRadius: 4, padding: "32px 20px", textAlign: "center", cursor: leaseUploading ? "wait" : "pointer", background: leaseParseError ? "#fef2f2" : "#fafaf9", transition: "all 0.18s", opacity: leaseUploading ? 0.7 : 1 }}
+                >
+                  <input id="lease-upload" type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: "none" }}
+                    onChange={(e) => { if (e.target.files?.[0]) handleLeaseUpload(e.target.files[0]); }} />
+                  {leaseUploading ? (
+                    <div>
+                      <div style={{ fontSize: 22, marginBottom: 10 }}>⏳</div>
+                      <div style={{ fontSize: 14, color: "#f26a1b", fontWeight: 600 }}>{t.reading}</div>
+                      <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 4 }}>This may take a few seconds…</div>
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#0d0d0d" }}>{selectedAssoc.name}</div>
-                    {(selectedAssoc.address || selectedAssoc.city) && (
-                      <div style={{ fontSize: 12, color: "#374151", marginTop: 2 }}>
-                        {[selectedAssoc.address, selectedAssoc.city, selectedAssoc.state, selectedAssoc.zip].filter(Boolean).join(", ")}
+                  ) : (
+                    <div>
+                      <div style={{ fontSize: 28, marginBottom: 10 }}>📄</div>
+                      <div style={{ fontSize: 14, color: "#0d0d0d", fontWeight: 500 }}>{leaseParseError ? "Upload a different document" : "Click to upload or drag & drop"}</div>
+                      <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>PDF, JPG, PNG · max 10 MB</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Confirmation card after successful parse */}
+              {leaseData && (
+                <div>
+                  <div style={{ padding: "16px 18px", background: leaseData.matched ? "#f0fdf4" : "#fffbeb", border: `1px solid ${leaseData.matched ? "#bbf7d0" : "#fde68a"}`, borderRadius: 4, marginBottom: 16 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: leaseData.matched ? "#1a6b3c" : "#b45309", textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "monospace", marginBottom: 10 }}>
+                      {leaseData.matched ? `✓ ${t.docFound}` : `⚠ ${t.assocUnknown}`}
+                    </div>
+
+                    {leaseData.matched ? (
+                      <div style={{ display: "grid", gap: 6 }}>
+                        <div>
+                          <div style={{ fontSize: 10, color: "#6b7280", fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.07em" }}>Association</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: "#0d0d0d" }}>{leaseData.matched.name}</div>
+                        </div>
+                        {leaseData.matched.address && (
+                          <div>
+                            <div style={{ fontSize: 10, color: "#6b7280", fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.07em" }}>Property Address</div>
+                            <div style={{ fontSize: 13, color: "#374151" }}>{leaseData.matched.address}</div>
+                          </div>
+                        )}
+                        {leaseData.extracted.unit && (
+                          <div>
+                            <div style={{ fontSize: 10, color: "#6b7280", fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.07em" }}>Unit</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#0d0d0d" }}>{leaseData.extracted.unit}</div>
+                          </div>
+                        )}
+                        {leaseData.extracted.tenants.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: 10, color: "#6b7280", fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.07em" }}>Applicant(s) on document</div>
+                            <div style={{ fontSize: 13, color: "#374151" }}>{leaseData.extracted.tenants.join(", ")}</div>
+                          </div>
+                        )}
+                        {leaseData.extracted.moveIn && (
+                          <div>
+                            <div style={{ fontSize: 10, color: "#6b7280", fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.07em" }}>Move-in / Closing Date</div>
+                            <div style={{ fontSize: 13, color: "#374151" }}>{leaseData.extracted.moveIn}</div>
+                          </div>
+                        )}
+                        <div style={{ marginTop: 4, fontSize: 11, color: "#6b7280", fontStyle: "italic" }}>{t.verifyNote}</div>
+                      </div>
+                    ) : (
+                      <div>
+                        {leaseData.extracted.association && (
+                          <div style={{ fontSize: 13, color: "#92400e", marginBottom: 6 }}>Document says: <strong>{leaseData.extracted.association}</strong></div>
+                        )}
+                        <div style={{ fontSize: 13, color: "#92400e", lineHeight: 1.55 }}>
+                          Please contact us at{" "}
+                          <a href="mailto:support@topfloridaproperties.com" style={{ color: "#f26a1b", fontWeight: 600 }}>support@topfloridaproperties.com</a>{" "}
+                          before applying so we can verify your association.
+                        </div>
                       </div>
                     )}
-                    <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4, fontStyle: "italic" }}>
-                      Verify this address matches your lease or purchase agreement
-                    </div>
                   </div>
-                )}
-              </div>
 
-              {/* Application type */}
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    {leaseData.matched && (
+                      <button
+                        onClick={confirmLease}
+                        style={{ flex: 1, padding: "12px 20px", background: "#f26a1b", color: "#fff", border: "none", borderRadius: 3, fontSize: 13, fontWeight: 700, cursor: "pointer", letterSpacing: "0.03em" }}
+                      >
+                        {t.confirmDetails} →
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { setLeaseData(null); setLeaseParseError(""); }}
+                      style={{ padding: "12px 16px", background: "#f3f4f6", color: "#6b7280", border: "none", borderRadius: 3, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                    >
+                      {t.uploadAgain}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══ STEP 1: Application Type ════════════════════════════════════ */}
+          {step === 1 && (
+            <div>
+              {/* Confirmed property context strip */}
+              {leaseData?.matched && (
+                <div style={{ marginBottom: 20, padding: "10px 14px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 4, display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <span style={{ color: "#1a6b3c", fontSize: 15, flexShrink: 0 }}>✓</span>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#1a6b3c" }}>{leaseData.matched.name}</div>
+                    {leaseData.extracted.unit && <div style={{ fontSize: 11, color: "#374151" }}>Unit {leaseData.extracted.unit} · {leaseData.matched.address}</div>}
+                  </div>
+                </div>
+              )}
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12, fontFamily: "monospace" }}>
                 {t.applicantType}
               </label>
@@ -962,7 +1098,7 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
                       setAppType(key);
                       if (key !== "couple")     setCoupleOption("");
                       if (key !== "commercial") setPrincipals([{ name: "", dob: "" }]);
-                      setApplicants(key === "couple" ? [{}, {}] : [{}]);
+                      setApplicants((prev) => key === "couple" ? [{ ...prev[0] }, {}] : [{ ...prev[0] }]);
                     }}
                     style={{ border: `2px solid ${appType === key ? "#f26a1b" : "#e5e7eb"}`, borderRadius: 4, padding: "14px 12px", cursor: "pointer", background: appType === key ? "#fff7f0" : "#fafaf9", transition: "all 0.18s" }}
                   >
@@ -973,8 +1109,6 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
                   </div>
                 ))}
               </div>
-
-              {/* Couple cert option */}
               {isCouple && (
                 <div style={{ background: "#fafaf9", borderRadius: 4, padding: 18, border: "1px solid #e5e7eb", marginBottom: 4 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: "#0d0d0d", marginBottom: 6, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.08em" }}>{t.marriageCertUpload}</div>
@@ -994,8 +1128,8 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
             </div>
           )}
 
-          {/* ══ STEP 1: Applicant Info ══════════════════════════════════════ */}
-          {step === 1 && (
+          {/* ══ STEP 2: Applicant Info ══════════════════════════════════════ */}
+          {step === 2 && (
             <div>
               {isCommercial ? (
                 <div>
@@ -1038,8 +1172,8 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
             </div>
           )}
 
-          {/* ══ STEP 2: Documents + Consent ════════════════════════════════ */}
-          {step === 2 && (
+          {/* ══ STEP 3: Documents + Consent ════════════════════════════════ */}
+          {step === 3 && (
             <div>
               <UploadBox label={t.govId}       t={t} uploaded={docs.govId}       uploading={uploading.govId}       onUpload={(f) => uploadDoc(f, "govId")} />
               <UploadBox label={t.proofIncome}  t={t} uploaded={docs.proofIncome} uploading={uploading.proofIncome} onUpload={(f) => uploadDoc(f, "proofIncome")} />
@@ -1059,8 +1193,8 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
             </div>
           )}
 
-          {/* ══ STEP 3: Payment ════════════════════════════════════════════ */}
-          {step === 3 && (
+          {/* ══ STEP 4: Payment ════════════════════════════════════════════ */}
+          {step === 4 && (
             <div>
               <div style={{ background: "#fafaf9", borderRadius: 4, padding: 22, border: "1px solid #e5e7eb", marginBottom: 20 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16, fontFamily: "monospace" }}>{t.paymentSummary}</div>
@@ -1129,9 +1263,9 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
           )}
 
           {/* Navigation */}
-          {step < 3 && (
+          {step < 4 && (
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24, gap: 12 }}>
-              {step > 0 ? (
+              {step > 1 ? (
                 <button onClick={() => { setStep((s) => s - 1); setError(""); }} style={{ padding: "11px 22px", background: "#f3f4f6", color: "#6b7280", border: "none", borderRadius: 3, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                   ← {t.back}
                 </button>
