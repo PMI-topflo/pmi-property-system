@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error("Supabase env vars not configured");
+  }
+  return createClient(url, key);
+}
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-internal-secret");
@@ -15,12 +19,14 @@ export async function POST(req: NextRequest) {
   const { applicationId } = await req.json();
   if (!applicationId) return NextResponse.json({ error: "applicationId required" }, { status: 400 });
 
-  const apiKey    = process.env.APPLYCHECK_API_KEY;
+  const apiKey = process.env.APPLYCHECK_API_KEY;
   const accountId = process.env.APPLYCHECK_ACCOUNT_ID;
 
   if (!apiKey || !accountId) {
     return NextResponse.json({ error: "Applycheck credentials not configured" }, { status: 503 });
   }
+
+  const supabase = getSupabase();
 
   const { data: app, error } = await supabase
     .from("applications")
@@ -44,9 +50,9 @@ export async function POST(req: NextRequest) {
     (app.applicants || []).forEach((a: Record<string, string>) => {
       const hasSSN = a.ssn && /^\d{3}-?\d{2}-?\d{4}$/.test(a.ssn);
       subjects.push({
-        name:    `${a.firstName} ${a.lastName}`.trim(),
-        email:   a.email,
-        dob:     a.dob,
+        name: `${a.firstName} ${a.lastName}`.trim(),
+        email: a.email,
+        dob: a.dob,
         package: hasSSN ? "SmartMove" : "International",
       });
     });
@@ -74,8 +80,8 @@ export async function POST(req: NextRequest) {
   );
 
   const succeeded = results.filter((r) => r.status === "fulfilled").length;
-  const failed    = results.filter((r) => r.status === "rejected").length;
-  const status    = failed === 0 ? "invited" : succeeded > 0 ? "partial" : "error";
+  const failed = results.filter((r) => r.status === "rejected").length;
+  const status = failed === 0 ? "invited" : succeeded > 0 ? "partial" : "error";
 
   await supabase.from("applications").update({ applycheck_status: status }).eq("id", applicationId);
 
