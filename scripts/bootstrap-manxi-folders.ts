@@ -22,8 +22,23 @@
 
 import { google } from 'googleapis';
 import { createClient } from '@supabase/supabase-js';
-// Load env vars from shell or .env.local before running this script.
-// e.g.: node --env-file=.env.local (Node 20.6+) or set vars in your shell.
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
+// Load .env.local manually — handles multi-line values like GOOGLE_SERVICE_ACCOUNT_JSON
+try {
+  const envFile = resolve(process.cwd(), '.env.local');
+  const lines = readFileSync(envFile, 'utf-8').split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx === -1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+    if (key && !(key in process.env)) process.env[key] = val;
+  }
+} catch { /* running with env vars already set */ }
 
 const PARENT_FOLDER_ID = process.env.MANXI_PARENT_FOLDER_ID
   ?? '1kRDm6ajZr8lXuXGcAXTnA3vigzhLCZpz';
