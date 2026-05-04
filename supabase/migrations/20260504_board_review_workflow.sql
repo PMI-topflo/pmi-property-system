@@ -32,3 +32,8 @@ CREATE TABLE IF NOT EXISTS public.application_board_reviews (
   sent_at timestamptz DEFAULT now(),
   decided_at timestamptz
 );
+
+-- Enable RLS — all access goes through supabaseAdmin (service role) which bypasses RLS.
+-- These tables must never be exposed to the anon/authenticated keys.
+ALTER TABLE public.association_board_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.application_board_reviews ENABLE ROW LEVEL SECURITY;
