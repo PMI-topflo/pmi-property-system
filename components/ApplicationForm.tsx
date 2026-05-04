@@ -110,7 +110,10 @@ const translations = {
     sendingInvite: "Sending…",
     rulesTitle: "Rules & Regulations",
     rulesConsent: "I have read and agree to abide by the Rules and Regulations of",
-    rulesRequired: "Please confirm you agree to the Rules & Regulations to continue.",
+    rulesSignaturePlaceholder: "Type your full legal name to sign",
+    rulesSignatureLabel: "Electronic Signature",
+    rulesSignatureNote: "By typing your name above you are electronically signing this agreement.",
+    rulesRequired: "Please sign the Rules & Regulations acknowledgment to continue.",
   },
   es: {
     title: "Solicitud de Residente",
@@ -203,6 +206,9 @@ const translations = {
     sendingInvite: "Enviando…",
     rulesTitle: "Reglamento",
     rulesConsent: "He leído y acepto cumplir con el Reglamento de",
+    rulesSignaturePlaceholder: "Escriba su nombre legal completo para firmar",
+    rulesSignatureLabel: "Firma Electrónica",
+    rulesSignatureNote: "Al escribir su nombre, está firmando electrónicamente este acuerdo.",
     rulesRequired: "Por favor confirme que acepta el Reglamento para continuar.",
   },
   pt: {
@@ -296,6 +302,9 @@ const translations = {
     sendingInvite: "Enviando…",
     rulesTitle: "Regulamento",
     rulesConsent: "Eu li e concordo em cumprir o Regulamento de",
+    rulesSignaturePlaceholder: "Digite seu nome legal completo para assinar",
+    rulesSignatureLabel: "Assinatura Eletrônica",
+    rulesSignatureNote: "Ao digitar seu nome, você está assinando eletronicamente este acordo.",
     rulesRequired: "Por favor confirme que concorda com o Regulamento para continuar.",
   },
   fr: {
@@ -389,6 +398,9 @@ const translations = {
     sendingInvite: "Envoi en cours…",
     rulesTitle: "Règlement Intérieur",
     rulesConsent: "J'ai lu et j'accepte de respecter le Règlement Intérieur de",
+    rulesSignaturePlaceholder: "Tapez votre nom légal complet pour signer",
+    rulesSignatureLabel: "Signature Électronique",
+    rulesSignatureNote: "En tapant votre nom, vous signez électroniquement cet accord.",
     rulesRequired: "Veuillez confirmer votre accord avec le Règlement Intérieur pour continuer.",
   },
   he: {
@@ -482,6 +494,9 @@ const translations = {
     sendingInvite: "שולח…",
     rulesTitle: "תקנון ותקנות",
     rulesConsent: "קראתי ואני מסכים לציית לתקנון ולתקנות של",
+    rulesSignaturePlaceholder: "הקלד את שמך המשפטי המלא כדי לחתום",
+    rulesSignatureLabel: "חתימה אלקטרונית",
+    rulesSignatureNote: "על ידי הקלדת שמך, אתה חותם אלקטרונית על הסכם זה.",
     rulesRequired: "אנא אשר הסכמתך לתקנון כדי להמשיך.",
   },
   ru: {
@@ -575,6 +590,9 @@ const translations = {
     sendingInvite: "Отправка…",
     rulesTitle: "Правила и нормы",
     rulesConsent: "Я прочитал и согласен соблюдать Правила и нормы",
+    rulesSignaturePlaceholder: "Введите ваше полное юридическое имя для подписи",
+    rulesSignatureLabel: "Электронная подпись",
+    rulesSignatureNote: "Вводя своё имя, вы электронно подписываете это соглашение.",
     rulesRequired: "Пожалуйста, подтвердите согласие с Правилами и нормами для продолжения.",
   },
 };
@@ -778,6 +796,7 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
   const [isMarriedCouple, setIsMarriedCouple] = useState<boolean | null>(null);
   const [occupants, setOccupants] = useState<{name: string; age: string; email: string}[]>([]);
   const [rulesAgreed, setRulesAgreed] = useState(false);
+  const [rulesSignature, setRulesSignature] = useState("");
   const [inviteSent, setInviteSent] = useState(false);
   const [inviteSending, setInviteSending] = useState(false);
 
@@ -938,7 +957,7 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
       if (!appType)                  { setError(t.selectType); return; }
       if (isCouple && !coupleOption) { setError(t.selectType); return; }
     }
-    if (step === 3 && !rulesAgreed) { setError(t.rulesRequired); return; }
+    if (step === 3 && !rulesSignature.trim()) { setError(t.rulesRequired); return; }
     if (step === 3 && !agreed) { setError(t.consentRequired); return; }
     setStep((s) => s + 1);
   };
@@ -966,7 +985,8 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
         stripe_payment_status: "pending",
         is_married_couple: isMarriedCouple,
         occupants: occupants.length > 0 ? occupants : null,
-        rules_agreed_at: new Date().toISOString(),
+        rules_agreed_at: rulesSignature.trim() ? new Date().toISOString() : null,
+        rules_signature: rulesSignature.trim() || null,
       };
 
       let appId = applicationId;
@@ -1390,20 +1410,38 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
               {(isCouple && hasCert || isMarriedCouple === true) && (
                 <UploadBox label={t.marriageCert} t={t} uploaded={docs.marriageCert} uploading={uploading.marriageCert} onUpload={(f) => uploadDoc(f, "marriageCert")} />
               )}
-              {/* Rules & Regulations */}
-              <div style={{ background: "#fafaf9", borderRadius: 4, padding: 18, border: "1px solid #e5e7eb", marginBottom: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#0d0d0d", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{t.rulesTitle}</div>
-                <p style={{ fontSize: 13, color: "#6b7280", lineHeight: 1.6, margin: "0 0 14px" }}>
+              {/* Rules & Regulations — with e-signature */}
+              <div style={{ background: "#fff7f0", borderRadius: 4, padding: 20, border: "2px solid #f26a1b", marginBottom: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#f26a1b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "monospace" }}>
+                  ✍ {t.rulesTitle}
+                </div>
+                <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.65, margin: "0 0 16px" }}>
                   {t.rulesConsent} <strong>{association || leaseData?.matched?.name || "your association"}</strong>.
                 </p>
-                <div onClick={() => setRulesAgreed(!rulesAgreed)} style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
-                  <div style={{ width: 18, height: 18, borderRadius: 2, border: `2px solid ${rulesAgreed ? "#f26a1b" : "#d1d5db"}`, background: rulesAgreed ? "#f26a1b" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, transition: "all 0.15s" }}>
-                    {rulesAgreed && <span style={{ color: "#fff", fontSize: 11, fontWeight: 700, lineHeight: 1 }}>✓</span>}
-                  </div>
-                  <span style={{ fontSize: 13, color: "#0d0d0d", fontWeight: rulesAgreed ? 600 : 400, lineHeight: 1.5 }}>
-                    {t.rulesConsent} <strong>{association || leaseData?.matched?.name || "your association"}</strong>
-                  </span>
+                <div style={{ marginBottom: 6 }}>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>
+                    {t.rulesSignatureLabel} *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={t.rulesSignaturePlaceholder}
+                    value={rulesSignature}
+                    onChange={(e) => { setRulesSignature(e.target.value); setRulesAgreed(e.target.value.trim().length > 0); }}
+                    style={{ width: "100%", boxSizing: "border-box" as const, padding: "11px 14px", borderRadius: 3, border: `1.5px solid ${rulesSignature.trim() ? "#f26a1b" : "#e5e7eb"}`, fontSize: 15, fontFamily: "'Fraunces', Georgia, serif", fontStyle: "italic", color: "#0d0d0d", background: "#fff", outline: "none", letterSpacing: "0.02em" }}
+                    onFocus={(e) => (e.target.style.borderColor = "#f26a1b")}
+                    onBlur={(e) => (e.target.style.borderColor = rulesSignature.trim() ? "#f26a1b" : "#e5e7eb")}
+                  />
                 </div>
+                {rulesSignature.trim() && (
+                  <div style={{ fontSize: 11, color: "#1a6b3c", fontWeight: 600, marginTop: 6 }}>
+                    ✓ {t.rulesSignatureNote}
+                  </div>
+                )}
+                {!rulesSignature.trim() && (
+                  <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>
+                    {t.rulesSignatureNote}
+                  </div>
+                )}
               </div>
               <div style={{ background: "#fafaf9", borderRadius: 4, padding: 18, border: "1px solid #e5e7eb", marginTop: 8 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "#0d0d0d", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{t.signature}</div>
