@@ -779,6 +779,7 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
   const [leaseData, setLeaseData]     = useState<LeaseData | null>(null);
   const [leaseConfirmed, setLeaseConfirmed] = useState(!!preselectedAssociation);
   const [leaseParseError, setLeaseParseError] = useState("");
+  const [rulesSections, setRulesSections] = useState<string[]>([]);
   const [appType, setAppType]         = useState("");
   const [coupleOption, setCoupleOption] = useState("");
   const [applicants, setApplicants]   = useState<Record<string, string>[]>([{}]);
@@ -857,6 +858,10 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
         .then((r) => r.json())
         .then((units: string[]) => setAssocUnits(units))
         .catch(() => setAssocUnits([]));
+      fetch(`/api/apply/association-rules?code=${encodeURIComponent(code)}`)
+        .then((r) => r.json())
+        .then(({ sections }: { sections: string[] }) => setRulesSections(sections))
+        .catch(() => setRulesSections([]));
     }
     // Auto-select application type based on number of tenants on lease
     if (leaseData.extracted.tenants.length >= 2) {
@@ -1415,9 +1420,19 @@ export default function ApplicationForm({ preselectedAssociation = null }) {
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#f26a1b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "monospace" }}>
                   ✍ {t.rulesTitle}
                 </div>
-                <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.65, margin: "0 0 16px" }}>
+                <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.65, margin: "0 0 12px" }}>
                   {t.rulesConsent} <strong>{association || leaseData?.matched?.name || "your association"}</strong>.
                 </p>
+                {rulesSections.length > 0 && (
+                  <div style={{ background: "#fff", border: "1px solid #fed7aa", borderRadius: 3, padding: "12px 14px", marginBottom: 16, maxHeight: 200, overflowY: "auto" }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#9a3412", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace", marginBottom: 8 }}>Topics covered</div>
+                    {rulesSections.map((s, i) => (
+                      <div key={i} style={{ fontSize: 12, color: "#374151", lineHeight: 1.7, paddingLeft: 4, borderLeft: "2px solid #fed7aa", marginBottom: 3, paddingLeft: 8 }}>
+                        {s}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div style={{ marginBottom: 6 }}>
                   <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>
                     {t.rulesSignatureLabel} *
