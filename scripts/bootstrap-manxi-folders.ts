@@ -25,20 +25,40 @@ import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
-// Load .env.local manually — handles multi-line values like GOOGLE_SERVICE_ACCOUNT_JSON
+// Load .env.local — handles multi-line quoted values (e.g. GOOGLE_SERVICE_ACCOUNT_JSON)
 try {
   const envFile = resolve(process.cwd(), '.env.local');
-  const lines = readFileSync(envFile, 'utf-8').split('\n');
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eqIdx = trimmed.indexOf('=');
-    if (eqIdx === -1) continue;
-    const key = trimmed.slice(0, eqIdx).trim();
-    const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+  const content = readFileSync(envFile, 'utf-8');
+  let i = 0;
+  const chars = content;
+  const len = chars.length;
+  while (i < len) {
+    // Skip blank lines and comments
+    while (i < len && (chars[i] === '\n' || chars[i] === '\r')) i++;
+    if (i >= len) break;
+    if (chars[i] === '#') { while (i < len && chars[i] !== '\n') i++; continue; }
+    // Read key
+    let keyEnd = i;
+    while (keyEnd < len && chars[keyEnd] !== '=' && chars[keyEnd] !== '\n') keyEnd++;
+    if (chars[keyEnd] !== '=') { i = keyEnd + 1; continue; }
+    const key = chars.slice(i, keyEnd).trim();
+    i = keyEnd + 1;
+    // Read value — handle optional surrounding quotes (single or double)
+    let val = '';
+    if (i < len && (chars[i] === '"' || chars[i] === "'")) {
+      const q = chars[i++];
+      while (i < len) {
+        if (chars[i] === '\\' && i + 1 < len) { val += chars[i + 1]; i += 2; continue; }
+        if (chars[i] === q) { i++; break; }
+        val += chars[i++];
+      }
+    } else {
+      while (i < len && chars[i] !== '\n' && chars[i] !== '\r') val += chars[i++];
+      val = val.trim();
+    }
     if (key && !(key in process.env)) process.env[key] = val;
   }
-} catch { /* running with env vars already set */ }
+} catch { /* env vars already set in environment */ }
 
 const PARENT_FOLDER_ID = process.env.MANXI_PARENT_FOLDER_ID
   ?? '1kRDm6ajZr8lXuXGcAXTnA3vigzhLCZpz';
