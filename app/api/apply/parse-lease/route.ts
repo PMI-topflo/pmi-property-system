@@ -15,7 +15,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export const runtime = 'nodejs'
-export const maxDuration = 30
+export const maxDuration = 60
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
 const MAX_BYTES = 10 * 1024 * 1024
@@ -107,10 +107,11 @@ export async function POST(req: NextRequest) {
     if (!jsonMatch) throw new Error('No JSON in response: ' + raw.slice(0, 300))
     extracted = JSON.parse(jsonMatch[0])
     if (!Array.isArray(extracted.tenants)) extracted.tenants = []
-  } catch (err) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
     console.error('[parse-lease] Gemini extraction error', err)
     return NextResponse.json(
-      { error: 'Could not read your document. Please try a clearer scan or contact us.' },
+      { error: 'Could not read your document. Please try a clearer scan or contact us.', _debug: msg },
       { status: 422 }
     )
   }
